@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>The Gavel — Judge Realvon Presides · A Courtroom Game for Ray-Ban Display</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
+  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:20px 30px 14px; display:flex; flex-direction:column; }
+  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:18px 16px; } }
+  .kicker { color:#e8b33c; letter-spacing:3px; font-size:15px; text-transform:uppercase; text-align:center; }
+  h1 { font-size:44px; text-align:center; line-height:1.05; margin:10px 0 4px; color:#fff; }
+  h2 { font-size:28px; line-height:1.15; margin:6px 0 9px; color:#fff; }
+  .sub { text-align:center; color:#bdb49e; font-size:19px; font-style:italic; }
+  .body { font-size:22px; line-height:1.32; color:#efe9da; margin:8px 0; }
+  .body b { color:#e8b33c; }
+  .cluebox { border:2px solid #e8b33c; border-radius:12px; padding:10px 13px; margin:9px 0; background:#141005; }
+  .cluebox .ct { color:#e8b33c; font-size:16px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+  .cluebox .cb { font-size:20px; line-height:1.28; }
+  .liebox { border:2px solid #5ec8e6; border-radius:12px; padding:10px 13px; margin:9px 0; background:#06121a; }
+  .liebox .ct { color:#5ec8e6; font-size:16px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+  .liebox .cb { font-size:20px; line-height:1.28; color:#eaf7ff; }
+  .hud { display:flex; justify-content:space-between; font-size:16px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:7px; margin-bottom:9px; letter-spacing:1px; }
+  .hud .gold { color:#e8b33c; }
+  .opts { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+  .opt { border:2px solid #3d3d3d; border-radius:12px; padding:10px 13px; font-size:21px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.2; }
+  .opt.sel { border-color:#e8b33c; color:#fff; background:#1c1503; }
+  .hint { text-align:center; color:#77705f; font-size:15px; margin-top:9px; font-style:italic; }
+  .bigemoji { text-align:center; font-size:54px; margin:6px 0; }
+  .rank { text-align:center; font-size:25px; color:#e8b33c; margin:8px 0; }
+  .center { text-align:center; }
+  .focus { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .fside { text-align:center; color:#8a8271; font-size:19px; padding:5px 10px; cursor:pointer; line-height:1.2; }
+  .fcur { border:3px solid #e8b33c; background:#1c1503; color:#fff; border-radius:14px; padding:17px 15px; font-size:26px; text-align:center; cursor:pointer; line-height:1.25; }
+  .fpos { text-align:center; color:#77705f; font-size:15px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+// ================= THE GAVEL — Judge Realvon Presides =================
+// A courtroom game for the Ray-Ban Display. Hear both sides, check the
+// evidence, detect the lies (your instinct misses nothing), rule, sentence.
+// Controls: Neural Band swipe = move, pinch = select.
+// Phone/browser preview: tap, swipe, or Arrow keys + Enter.
+
+function lieBox(inner){ return '<div class="liebox"><div class="ct">⚡ Lie detected</div><div class="cb">'+inner+'</div></div>'; }
+function truthBox(inner){ return '<div class="liebox"><div class="ct">⚡ Instinct</div><div class="cb">'+inner+'</div></div>'; }
+function evBox(inner){ return '<div class="cluebox"><div class="ct">📁 Evidence</div><div class="cb">'+inner+'</div></div>'; }
+
+var CASES = [
+{ id:"mower", name:"Bell v. Ortiz — The Mower", max:3,
+  intro:[
+    "Small claims court. <b>Tyrone Bell</b> lent his neighbor <b>Marcus Ortiz</b> a riding mower in June. Bell says it came back wrecked in August — if it came back at all. He sues for <b>$450</b>.",
+    "Ortiz says he returned it in a week, working fine. One of these men is lying to your court, Judge."
+  ],
+  sideA:[ // Bell
+    "<b>Bell:</b> \u201CBorrowed it June 3rd, said one weekend. I got it back <b>August 19th</b>, deck cracked, blade bent. A mower don't crack its own deck, Your Honor.\u201D",
+    "<b>Bell:</b> \u201CLook at my yard photos from July — grass knee-high. I wasn't mowing anything. I didn't HAVE my mower.\u201D"
+  ],
+  sideB:[ // Ortiz
+    "<b>Ortiz:</b> \u201CI returned it <b>June 10th</b>, running fine. Whatever happened to it after that happened in HIS shed, not my hands.\u201D",
+    truthBox("His eyes went to the door on 'June 10th' — before the sentence was even finished. The date is the problem. You can feel it.")
+  ],
+  evidence:[
+    evBox("Ortiz's own social post, <b>July 27</b>: a photo of him riding a green mower — same dented fender as Bell's — at his cousin's house across town. Three weeks after he 'returned' it."),
+    lieBox("Ortiz had the mower in late July. It was never in Bell's shed. He lied to this court about the one fact that decides this case.")
+  ],
+  rulingTitle:"How does the court rule?",
+  ruling:[
+    { label:"Rule for Bell — Ortiz is liable", pts:1, sentence:true, text:"\u201CMr. Ortiz, your own photo put you on that mower in July. The court rules for Mr. Bell.\u201D Ortiz suddenly finds the floor very interesting." },
+    { label:"Rule for Ortiz — case dismissed", pts:0, sentence:false, text:"You dismiss it — and Bell looks at you like the court just failed him in broad daylight. The photo on file says it did." }
+  ],
+  sentenceTitle:"Set the award",
+  sentence:[
+    { label:"$450 — full repair cost", pts:2, text:"Full repair. Fair, and exactly what the damage costs." },
+    { label:"$200 — split the difference", pts:1, text:"You split it down the middle. Bell covers half the damage to his own mower, and he knows Ortiz knows why." },
+    { label:"No award", pts:0, text:"Liable but pays nothing. A ruling with no weight behind it — Ortiz walks out smiling." }
+  ]
+},
+{ id:"leadfoot", name:"State v. Pierce — Leadfoot", max:3,
+  intro:[
+    "Traffic court. <b>Dana Pierce</b> was clocked at <b>92 in a 45</b> on Bragg Blvd. She pleaded not guilty and asked for a trial. Bold. The court admires bold. The court also has the file."
+  ],
+  sideA:[ // Officer
+    "<b>Officer Ruiz:</b> \u201CRadar calibrated that morning, Your Honor. Locked her vehicle at <b>92 for a quarter mile</b>. Clear road, dry pavement — and a school-zone sign two blocks back.\u201D"
+  ],
+  sideB:[ // Pierce
+    "<b>Pierce:</b> \u201CMy speedometer's been broken for months. I was doing <b>50, maybe 55</b>. That radar must've caught somebody else.\u201D",
+    truthBox("The broken-speedometer line came out before your question even landed. Rehearsed. People who rehearse a defense usually know why they need one.")
+  ],
+  evidence:[
+    evBox("Her own post from that night: a dashboard selfie — speedometer needle visible, sitting at <b>88</b> — captioned 'ate Bragg UP tonight 😤'."),
+    lieBox("The speedometer works fine, it was working that night, and she was proud of the number. She lied about the speed, the gauge, all of it.")
+  ],
+  rulingTitle:"Guilty or not guilty?",
+  ruling:[
+    { label:"Guilty", pts:1, sentence:true, text:"\u201CMs. Pierce, the court finds you guilty. Your speedometer works — the whole internet watched it work.\u201D" },
+    { label:"Not guilty", pts:0, sentence:false, text:"Not guilty — despite her own dashboard confessing in public. She'll tell this story at dinner forever. Bragg Blvd hears about it first, at 92." }
+  ],
+  sentenceTitle:"Pass sentence",
+  sentence:[
+    { label:"$350 fine + driving school", pts:2, text:"Fine plus a Saturday in driving school. It costs her, it teaches her, and Bragg Blvd gets a slower Pierce." },
+    { label:"$350 fine only", pts:1, text:"The fine lands. Whether the lesson does is between her and her right foot." },
+    { label:"Weekend in county jail", pts:0, text:"Jail for a first-offense speeder — the appeals court would eat that alive, and so would the evening news. The gavel is not a hammer for every nail." }
+  ]
+},
+{ id:"smoke", name:"Grant v. Freeman — Smoke Wars", max:3,
+  intro:[
+    "Neighbor dispute. <b>Ms. Grant</b> wants this court to <b>ban Mr. Freeman's backyard smoker</b>. Freeman says she's exaggerating everything. The whole street smells like brisket and tension."
+  ],
+  sideA:[ // Grant
+    "<b>Grant:</b> \u201CEvery weekend, all day, smoke pours into my yard and my windows. My grandson has asthma. I can't open my own house up. I'm not asking for money, Your Honor. I'm asking for <b>air</b>.\u201D",
+    truthBox("No tells. Her voice shakes once — at 'asthma' — and shaking about that isn't acting.")
+  ],
+  sideB:[ // Freeman
+    "<b>Freeman:</b> \u201CI smoke meat maybe <b>twice a month</b>. She's got a camera pointed at my yard and a grudge pointed at me.\u201D",
+    truthBox("'Twice a month' came out too fast and too round. Rounded numbers are usually edited numbers.")
+  ],
+  evidence:[
+    evBox("Grant's dated photos: the smoker running <b>9 of the last 10 weekends</b>, hours at a time. Freeman lowballed this court."),
+    truthBox("Both of them believe their side. He lied about how often — but a total ban would end a legal hobby on his own land, forever, for doing it... often. This one's a judgment call, Judge. That's why it's yours.")
+  ],
+  rulingTitle:"How does the court rule?",
+  ruling:[
+    { label:"Compromise: smoker hours 10–6 + move it to the far corner", pts:3, sentence:false, text:"He moves the smoker to the far corner, runs it 10 to 6 only, and she gets her evenings back. Neither of them claps — which is how you know a compromise is fair." },
+    { label:"Rule for Grant — total ban on the smoker", pts:1, sentence:false, text:"Total ban. Her facts were stronger — but you answered a real grievance with a bigger one. The appeals of the neighborhood begin at the cookout that now isn't." },
+    { label:"Rule for Freeman — case dismissed", pts:0, sentence:false, text:"Dismissed — with nine weekends of photos sitting in the file. Grant leaves with her camera and her asthma and no reason to trust this room." }
+  ],
+  sentence:null
+},
+{ id:"ghost", name:"State v. Reed — The Ghost Game", max:3,
+  intro:[
+    "Shoplifting trial. <b>Jaylen Reed, 19</b>, is accused of stealing a <b>$70 game</b> from a shop on Skibo Road. He says the game was his own. The clerk says otherwise. Somebody is lying to this court, Judge — and it might not be the kid."
+  ],
+  sideA:[ // Clerk
+    "<b>Clerk (Mr. Voss):</b> \u201CI saw him slip a game into his jacket and walk out. I checked the case after — that title was gone off the shelf.\u201D"
+  ],
+  sideB:[ // Reed
+    "<b>Reed:</b> \u201CThat was MY copy. I brought it in to trade, changed my mind, walked out with my own game. I bought it in <b>March</b> — it's on my account.\u201D",
+    truthBox("Steady. Angry, but steady — and angry isn't evidence. Nothing in him is performing. File that.")
+  ],
+  evidence:[
+    evBox("The shop's own <b>trade-in log</b>, one week BEFORE the arrest: Jaylen Reed, that exact title, serial ending <b>4417</b> — appraised in store. He declined the offer and took it home. The game seized from his jacket that night: serial <b>4417</b>."),
+    lieBox("The clerk logged that serial himself at trade-in. He knew exactly whose game it was — and called it theft anyway. He lied to this court, under oath, about a kid.")
+  ],
+  rulingTitle:"Guilty or not guilty?",
+  ruling:[
+    { label:"Not guilty — Reed walks free", pts:3, sentence:false, text:"\u201CNot guilty. And Mr. Voss — the court is referring your testimony for review. You don't point this room at a teenager with a story you knew was false.\u201D The kid exhales for the first time today." },
+    { label:"Guilty", pts:0, sentence:false, text:"Guilty — on the word of a clerk contradicted by his own logbook. The serial number sits in the record, unanswered. This one will come back on appeal, and it should." }
+  ],
+  sentence:null
+}];
+
+// ================= Engine (shared with Night Shift) =================
+var S, stage = document.getElementById("stage"), currentOpts = [], lastRender = null;
+function reset(){ S = { score:0, max:0, ruled:{}, sel:0, run:null, caseId:null, screen:"title" }; }
+reset();
+function ruledCount(){ return Object.keys(S.ruled).length; }
+function hud(){
+  return '<div class="hud"><span>THE GAVEL</span><span>JUSTICE <span class="gold">'+S.score+' / '+(S.max||0)+'</span> · CASES <span class="gold">'+ruledCount()+' / '+CASES.length+'</span></span></div>';
+}
+function render(html, opts){
+  currentOpts = opts || [];
+  lastRender = { html:html, opts:currentOpts };
+  var menuHtml;
+  if (currentOpts.length <= 1){
+    menuHtml = '<div class="opts">' + currentOpts.map(function(o,i){ return '<div class="opt sel" data-i="'+i+'">'+o.label+'</div>'; }).join("") + '</div>';
+  } else {
+    var n = currentOpts.length, cur = currentOpts[S.sel];
+    var prev = currentOpts[(S.sel-1+n)%n], next = currentOpts[(S.sel+1)%n];
+    menuHtml = '<div class="focus"><div class="fside" id="fprev">▲ '+prev.label+'</div>' +
+      '<div class="fcur" id="fcur">'+cur.label+'</div>' +
+      '<div class="fside" id="fnext">▼ '+next.label+'</div>' +
+      '<div class="fpos">'+(S.sel+1)+' of '+n+' — swipe to browse, pinch the gold box to choose</div></div>';
+  }
+  stage.innerHTML = html + menuHtml + '<div class="hint">Swipe to move · Pinch / tap to choose</div>';
+  Array.prototype.forEach.call(stage.querySelectorAll(".opt"), function(el){
+    el.addEventListener("click", function(){ S.sel=parseInt(el.getAttribute("data-i"),10); activate(); });
+  });
+  var fp=document.getElementById("fprev"), fc=document.getElementById("fcur"), fn=document.getElementById("fnext");
+  if (fp) fp.addEventListener("click", function(){ move(-1); });
+  if (fn) fn.addEventListener("click", function(){ move(1); });
+  if (fc) fc.addEventListener("click", function(){ activate(); });
+  fitToLens();
+}
+function fitToLens(){
+  try{ requestAnimationFrame(function(){
+    stage.style.transform = "";
+    var need = stage.scrollHeight, avail = window.innerHeight || 600;
+    if (need > avail){ var sc = Math.max(0.45,(avail/need)*0.99); stage.style.transformOrigin="top center"; stage.style.transform="scale("+sc+")"; }
+  }); }catch(e){}
+}
+function runPages(title, pages, onDone){
+  S.screen="run";
+  S.run = { title:title, pages:pages, i:0, onDone:onDone };
+  showRunPage();
+}
+function showRunPage(){
+  var r = S.run, last = r.i === r.pages.length-1;
+  S.sel = 0;
+  render(hud() + '<h2>'+r.title+'</h2><p class="body">'+r.pages[r.i]+'</p>',
+    [ { label: last ? "Done →" : "Continue →", fn:function(){
+      if (!last){ r.i++; showRunPage(); } else { var d=r.onDone; S.run=null; d(); }
+    } } ]);
+}
+function showTitle(){
+  S.screen="title"; S.sel=0;
+  render('<div class="kicker">All Rise</div><h1>THE<br>GAVEL</h1><div class="bigemoji">⚖️</div>' +
+    '<div class="sub">The Honorable Judge Realvon presiding<br>Cumberland County Court</div>' +
+    '<p class="body center" style="margin-top:14px">Four cases on today\'s docket.<br>Hear both sides. Check the evidence.<br><b>Nobody can lie to you — you detect it the second it\'s said.</b><br>Then rule, and make it stick.</p>',
+    [ { label:"▶ Court is in session", fn:showBrief } ]);
+}
+function showBrief(){
+  S.screen="brief"; S.sel=0;
+  render(hud() + '<h2>How Court Works</h2>' +
+    '<p class="body">Each case: you\'ll hear <b>both sides</b>, then the <b>evidence</b>. Your ⚡ instinct flags every lie the moment it\'s told — and every truth worth trusting.</p>' +
+    '<p class="body">Then <b>you rule</b> — and where the case calls for it, <b>you set the sentence or the award</b>. Right verdict, fair weight: full justice points. Adjourn when the docket\'s done for your final rating.</p>',
+    [ { label:"Call the first case →", fn:showDocket } ]);
+}
+function showDocket(){
+  S.screen="docket";
+  var opts = CASES.map(function(c){
+    var done = !!S.ruled[c.id];
+    return { label:(done?'<span style="color:#7fc96b">✓</span> ':'')+c.name, fn:function(){ openCase(c.id); } };
+  });
+  opts.push({ label:"🔨 Adjourn court — final rating", fn:finishCourt });
+  if (S.sel >= opts.length) S.sel = 0;
+  render(hud() + '<h2>Today\'s Docket</h2><p class="body">Pick a case to hear.</p>', opts);
+}
+function openCase(id){
+  var c = CASES.filter(function(x){ return x.id===id; })[0];
+  S.caseId = id;
+  runPages("Case: "+c.name, c.intro, function(){
+    runPages("First side", c.sideA, function(){
+      runPages("Other side", c.sideB, function(){
+        runPages("Evidence Before the Court", c.evidence, function(){ showRuling(c); });
+      });
+    });
+  });
+}
+function showRuling(c){
+  S.screen="ruling"; S.sel=0;
+  var opts = c.ruling.map(function(o){ return { label:o.label, fn:function(){
+    if (o.sentence && c.sentence) showSentence(c, o);
+    else completeCase(c, o, null);
+  } }; });
+  render(hud() + '<h2>'+c.rulingTitle+'</h2><p class="body">The evidence is in. The lies are known — to you, anyway. Rule.</p>', opts);
+}
+function showSentence(c, rulingOpt){
+  S.screen="sentence"; S.sel=0;
+  var opts = c.sentence.map(function(o){ return { label:o.label, fn:function(){ completeCase(c, rulingOpt, o); } }; });
+  render(hud() + '<h2>'+c.sentenceTitle+'</h2><p class="body">A right ruling with the wrong weight is only half of justice.</p>', opts);
+}
+function completeCase(c, rulingOpt, sentOpt){
+  var pts = rulingOpt.pts + (sentOpt ? sentOpt.pts : 0);
+  if (!S.ruled[c.id]){ S.score += pts; S.max += c.max; }
+  else { S.score += (pts - S.ruled[c.id].points); }
+  S.ruled[c.id] = { points:pts };
+  var pages = [ rulingOpt.text ];
+  if (sentOpt) pages.push(sentOpt.text);
+  pages.push('<b>Justice: +'+pts+' of '+c.max+'</b> on this case.');
+  runPages("The Court Rules", pages, showDocket);
+}
+function finishCourt(){
+  S.screen="end"; S.sel=0;
+  var pct = S.max ? Math.round(100*S.score/S.max) : 0, title, body, rank;
+  if (ruledCount()===0){
+    title="COURT NEVER SAT"; rank="★ Rating: Empty Bench";
+    body="You adjourned before hearing a single case. The litigants are still in the hallway, the coffee's still hot, and justice is still waiting on a judge.";
+  } else if (pct>=90){
+    title="LEGENDARY BENCH"; rank="★ Rating: Supreme Court Material";
+    body="Every liar measured, every ruling weighed to the ounce. People will tell stories about this docket — the day Judge Realvon sat, and nobody, NOBODY, got a lie past that bench.";
+  } else if (pct>=65){
+    title="A FAIR COURT"; rank="★ Rating: Fair and Firm";
+    body="The right calls, mostly with the right weight behind them. This county can trust this bench — and the liars in it have learned to fear it a little.";
+  } else if (pct>=40){
+    title="ROUGH JUSTICE"; rank="★ Rating: The Appeals Court Is Circling";
+    body="Some rulings landed, some flew wide. Justice got served today — just not always to the right table.";
+  } else {
+    title="COURTROOM CHAOS"; rank="★ Rating: Overturned on Appeal";
+    body="The evidence was on the table and the lies were flagged — and the rulings still went the other way. The appeals court sends its regards, and its paperwork.";
+  }
+  render(hud() + '<div class="bigemoji">🔨</div><h2 class="center">'+title+'</h2>' +
+    '<p class="body">'+body+'</p><p class="rank">'+rank+'</p>' +
+    '<p class="body center">Cases ruled: '+ruledCount()+' / '+CASES.length+' · Justice score: '+S.score+' / '+(S.max||0)+'</p>',
+    [ { label:"↻ New court day", fn:function(){ reset(); showTitle(); } } ]);
+  try{ localStorage.setItem("thegavel_rank", rank); }catch(e){}
+}
+// ================= Input =================
+function activate(){ var o = currentOpts[S.sel]; if (o && o.fn) o.fn(); }
+function move(d){
+  if (!currentOpts.length) return;
+  S.sel = (S.sel + d + currentOpts.length) % currentOpts.length;
+  if (lastRender) render(lastRender.html, lastRender.opts);
+}
+document.addEventListener("keydown", function(e){
+  if (e.key==="ArrowDown" || e.key==="ArrowRight"){ move(1); e.preventDefault(); }
+  else if (e.key==="ArrowUp" || e.key==="ArrowLeft"){ move(-1); e.preventDefault(); }
+  else if (e.key==="Enter" || e.key===" "){ activate(); e.preventDefault(); }
+});
+var tx=0, ty=0;
+document.addEventListener("touchstart", function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+document.addEventListener("touchend", function(e){
+  var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dy)>48 && Math.abs(dy)>Math.abs(dx)){ move(dy<0?1:-1); }
+}, {passive:true});
+
+showTitle();
+</script>
+</body>
+</html>

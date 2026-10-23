@@ -70,16 +70,12 @@ var CASES = [
     evBox("Ortiz's own social post, <b>July 27</b>: a photo of him riding a green mower — same dented fender as Bell's — at his cousin's house across town. Three weeks after he 'returned' it."),
     lieBox("Ortiz had the mower in late July. It was never in Bell's shed. He lied to this court about the one fact that decides this case.")
   ],
-  rulingTitle:"How does the court rule?",
-  ruling:[
-    { label:"Rule for Bell — Ortiz is liable", pts:1, sentence:true, text:"\u201CMr. Ortiz, your own photo put you on that mower in July. The court rules for Mr. Bell.\u201D Ortiz suddenly finds the floor very interesting." },
-    { label:"Rule for Ortiz — case dismissed", pts:0, sentence:false, text:"You dismiss it — and Bell looks at you like the court just failed him in broad daylight. The photo on file says it did." }
-  ],
-  sentenceTitle:"Set the award",
-  sentence:[
-    { label:"$450 — full repair cost", pts:2, text:"Full repair. Fair, and exactly what the damage costs." },
-    { label:"$200 — split the difference", pts:1, text:"You split it down the middle. Bell covers half the damage to his own mower, and he knows Ortiz knows why." },
-    { label:"No award", pts:0, text:"Liable but pays nothing. A ruling with no weight behind it — Ortiz walks out smiling." }
+  verdictTitle:"Your verdict — Bell v. Ortiz",
+  people:["Tyrone Bell", "Marcus Ortiz"],
+  verdicts:[
+    { label:"Rule for Tyrone Bell", text:"The gavel falls. \u201CThis court rules for Tyrone Bell. Mr. Ortiz, the claim is decided in Mr. Bell's favor.\u201D" },
+    { label:"Rule for Marcus Ortiz", text:"The gavel falls. \u201CThis court rules for Marcus Ortiz. Mr. Bell, your claim is denied.\u201D" },
+    { label:"Dismiss the case", text:"The gavel falls. \u201CThis case is dismissed. Neither side wins in this courtroom today.\u201D" }
   ]
 },
 { id:"leadfoot", name:"State v. Pierce — Leadfoot", max:3,
@@ -97,16 +93,12 @@ var CASES = [
     evBox("Her own post from that night: a dashboard selfie — speedometer needle visible, sitting at <b>88</b> — captioned 'ate Bragg UP tonight 😤'."),
     lieBox("The speedometer works fine, it was working that night, and she was proud of the number. She lied about the speed, the gauge, all of it.")
   ],
-  rulingTitle:"Guilty or not guilty?",
-  ruling:[
-    { label:"Guilty", pts:1, sentence:true, text:"\u201CMs. Pierce, the court finds you guilty. Your speedometer works — the whole internet watched it work.\u201D" },
-    { label:"Not guilty", pts:0, sentence:false, text:"Not guilty — despite her own dashboard confessing in public. She'll tell this story at dinner forever. Bragg Blvd hears about it first, at 92." }
-  ],
-  sentenceTitle:"Pass sentence",
-  sentence:[
-    { label:"$350 fine + driving school", pts:2, text:"Fine plus a Saturday in driving school. It costs her, it teaches her, and Bragg Blvd gets a slower Pierce." },
-    { label:"$350 fine only", pts:1, text:"The fine lands. Whether the lesson does is between her and her right foot." },
-    { label:"Weekend in county jail", pts:0, text:"Jail for a first-offense speeder — the appeals court would eat that alive, and so would the evening news. The gavel is not a hammer for every nail." }
+  verdictTitle:"Your verdict — State v. Pierce",
+  people:["Dana Pierce", "Officer Ruiz"],
+  verdicts:[
+    { label:"Guilty — Dana Pierce", text:"The gavel falls. \u201CMs. Pierce, this court finds you guilty.\u201D" },
+    { label:"Not guilty — Dana Pierce", text:"The gavel falls. \u201CMs. Pierce, this court finds you not guilty. You are free to go.\u201D" },
+    { label:"Dismiss the charges", text:"The gavel falls. \u201CThe charges against Ms. Pierce are dismissed.\u201D" }
   ]
 },
 { id:"smoke", name:"Grant v. Freeman — Smoke Wars", max:3,
@@ -125,13 +117,14 @@ var CASES = [
     evBox("Grant's dated photos: the smoker running <b>9 of the last 10 weekends</b>, hours at a time. Freeman lowballed this court."),
     truthBox("Both of them believe their side. He lied about how often — but a total ban would end a legal hobby on his own land, forever, for doing it... often. This one's a judgment call, Judge. That's why it's yours.")
   ],
-  rulingTitle:"How does the court rule?",
-  ruling:[
-    { label:"Compromise: smoker hours 10–6 + move it to the far corner", pts:3, sentence:false, text:"He moves the smoker to the far corner, runs it 10 to 6 only, and she gets her evenings back. Neither of them claps — which is how you know a compromise is fair." },
-    { label:"Rule for Grant — total ban on the smoker", pts:1, sentence:false, text:"Total ban. Her facts were stronger — but you answered a real grievance with a bigger one. The appeals of the neighborhood begin at the cookout that now isn't." },
-    { label:"Rule for Freeman — case dismissed", pts:0, sentence:false, text:"Dismissed — with nine weekends of photos sitting in the file. Grant leaves with her camera and her asthma and no reason to trust this room." }
-  ],
-  sentence:null
+  verdictTitle:"Your verdict — Grant v. Freeman",
+  people:["Ms. Grant", "Mr. Freeman"],
+  verdicts:[
+    { label:"Rule for Grant — restrict the smoker", text:"The gavel falls. \u201CThis court rules for Ms. Grant. Mr. Freeman, the smoker moves to the far corner and runs only from 10 AM to 6 PM.\u201D" },
+    { label:"Rule for Grant — ban the smoker", text:"The gavel falls. \u201CThis court rules for Ms. Grant. Mr. Freeman, the smoker is banned.\u201D" },
+    { label:"Rule for Freeman — no restrictions", text:"The gavel falls. \u201CThis court rules for Mr. Freeman. No restrictions are imposed on the smoker.\u201D" },
+    { label:"Dismiss the case", text:"The gavel falls. \u201CThis case is dismissed. The court imposes no order on either neighbor.\u201D" }
+  ]
 },
 { id:"ghost", name:"State v. Reed — The Ghost Game", max:3,
   intro:[
@@ -148,21 +141,37 @@ var CASES = [
     evBox("The shop's own <b>trade-in log</b>, one week BEFORE the arrest: Jaylen Reed, that exact title, serial ending <b>4417</b> — appraised in store. He declined the offer and took it home. The game seized from his jacket that night: serial <b>4417</b>."),
     lieBox("The clerk logged that serial himself at trade-in. He knew exactly whose game it was — and called it theft anyway. He lied to this court, under oath, about a kid.")
   ],
-  rulingTitle:"Guilty or not guilty?",
-  ruling:[
-    { label:"Not guilty — Reed walks free", pts:3, sentence:false, text:"\u201CNot guilty. And Mr. Voss — the court is referring your testimony for review. You don't point this room at a teenager with a story you knew was false.\u201D The kid exhales for the first time today." },
-    { label:"Guilty", pts:0, sentence:false, text:"Guilty — on the word of a clerk contradicted by his own logbook. The serial number sits in the record, unanswered. This one will come back on appeal, and it should." }
-  ],
-  sentence:null
+  verdictTitle:"Your verdict — State v. Reed",
+  people:["Jaylen Reed", "Mr. Voss"],
+  verdicts:[
+    { label:"Not guilty — Jaylen Reed goes free", text:"The gavel falls. \u201CMr. Reed, this court finds you not guilty. You are free to go.\u201D" },
+    { label:"Guilty — Jaylen Reed", text:"The gavel falls. \u201CMr. Reed, this court finds you guilty.\u201D" },
+    { label:"Dismiss the charges", text:"The gavel falls. \u201CThe charges against Mr. Reed are dismissed.\u201D" }
+  ]
 }];
+
+var FINE_AMOUNTS = [
+  { label:"$100 fine", text:"$100" },
+  { label:"$500 fine", text:"$500" },
+  { label:"$1,000 fine", text:"$1,000" },
+  { label:"$2,500 fine", text:"$2,500" },
+  { label:"$5,000 fine", text:"$5,000" }
+];
+var JAIL_TERMS = [
+  { label:"24 hours in jail", text:"24 hours" },
+  { label:"7 days in jail", text:"7 days" },
+  { label:"30 days in jail", text:"30 days" },
+  { label:"90 days in jail", text:"90 days" },
+  { label:"1 year in jail", text:"1 year" }
+];
 
 // ================= Engine (shared with Night Shift) =================
 var S, stage = document.getElementById("stage"), currentOpts = [], lastRender = null;
-function reset(){ S = { score:0, max:0, ruled:{}, sel:0, run:null, caseId:null, screen:"title" }; }
+function reset(){ S = { ruled:{}, sel:0, run:null, caseId:null, screen:"title", currentVerdict:null }; }
 reset();
 function ruledCount(){ return Object.keys(S.ruled).length; }
 function hud(){
-  return '<div class="hud"><span>THE GAVEL</span><span>JUSTICE <span class="gold">'+S.score+' / '+(S.max||0)+'</span> · CASES <span class="gold">'+ruledCount()+' / '+CASES.length+'</span></span></div>';
+  return '<div class="hud"><span>THE GAVEL</span><span>CASES DECIDED <span class="gold">'+ruledCount()+' / '+CASES.length+'</span></span></div>';
 }
 function render(html, opts){
   currentOpts = opts || [];
@@ -212,14 +221,14 @@ function showTitle(){
   S.screen="title"; S.sel=0;
   render('<div class="kicker">All Rise</div><h1>THE<br>GAVEL</h1><div class="bigemoji">⚖️</div>' +
     '<div class="sub">The Honorable Judge Realvon presiding<br>Cumberland County Court</div>' +
-    '<p class="body center" style="margin-top:14px">Four cases on today\'s docket.<br>Hear both sides. Check the evidence.<br><b>Nobody can lie to you — you detect it the second it\'s said.</b><br>Then rule, and make it stick.</p>',
+    '<p class="body center" style="margin-top:14px">Four cases on today\'s docket.<br>Hear both sides. Check the evidence.<br><b>You pick the verdict. You pick the fine. You pick the jail time. Or you dismiss it.</b><br>Nobody decides for Judge Realvon.</p>',
     [ { label:"▶ Court is in session", fn:showBrief } ]);
 }
 function showBrief(){
   S.screen="brief"; S.sel=0;
-  render(hud() + '<h2>How Court Works</h2>' +
+  render(hud() + '<h2>Your Court, Your Call</h2>' +
     '<p class="body">Each case: you\'ll hear <b>both sides</b>, then the <b>evidence</b>. Your ⚡ instinct flags every lie the moment it\'s told — and every truth worth trusting.</p>' +
-    '<p class="body">Then <b>you rule</b> — and where the case calls for it, <b>you set the sentence or the award</b>. Right verdict, fair weight: full justice points. Adjourn when the docket\'s done for your final rating.</p>',
+    '<p class="body">After that, the decision is entirely yours: <b>pick the verdict</b>, then choose whether either person gets <b>no punishment, a fine, jail, or both</b>. You set the amount and the time. Or dismiss the whole case. No verdict is picked for you.</p>',
     [ { label:"Call the first case →", fn:showDocket } ]);
 }
 function showDocket(){
@@ -228,7 +237,7 @@ function showDocket(){
     var done = !!S.ruled[c.id];
     return { label:(done?'<span style="color:#7fc96b">✓</span> ':'')+c.name, fn:function(){ openCase(c.id); } };
   });
-  opts.push({ label:"🔨 Adjourn court — final rating", fn:finishCourt });
+  opts.push({ label:"🔨 Adjourn court — see your record", fn:finishCourt });
   if (S.sel >= opts.length) S.sel = 0;
   render(hud() + '<h2>Today\'s Docket</h2><p class="body">Pick a case to hear.</p>', opts);
 }
@@ -244,52 +253,103 @@ function openCase(id){
   });
 }
 function showRuling(c){
-  S.screen="ruling"; S.sel=0;
-  var opts = c.ruling.map(function(o){ return { label:o.label, fn:function(){
-    if (o.sentence && c.sentence) showSentence(c, o);
-    else completeCase(c, o, null);
+  S.screen="verdict"; S.sel=0;
+  var opts = c.verdicts.map(function(o){ return { label:o.label, fn:function(){ chooseVerdict(c, o); } }; });
+  render(hud() + '<h2>'+c.verdictTitle+'</h2><p class="body">The evidence is in. The game does not choose the outcome — <b>you do</b>.</p>', opts);
+}
+function chooseVerdict(c, verdict){
+  S.currentVerdict = verdict;
+  showSanctionTarget(c, verdict);
+}
+function showSanctionTarget(c, verdict){
+  S.screen="sanction-target"; S.sel=0;
+  var opts = [ { label:"No fine or jail", fn:function(){
+    completeCase(c, verdict, { type:"none", target:null, summary:"No fine or jail" });
+  } } ];
+  c.people.forEach(function(person){
+    opts.push({ label:"Punish "+person, fn:function(){ showSanctionType(c, verdict, person); } });
+  });
+  render(hud() + '<h2>Fine or jail?</h2><p class="body">Separate from the verdict, you may punish either person for lying or conduct in your courtroom. Choose the person — or choose nobody.</p>', opts);
+}
+function showSanctionType(c, verdict, person){
+  S.screen="sanction-type"; S.sel=0;
+  var opts = [
+    { label:"Fine only — "+person, fn:function(){ showFineAmount(c, verdict, { type:"fine", target:person }); } },
+    { label:"Jail only — "+person, fn:function(){ showJailTerm(c, verdict, { type:"jail", target:person }); } },
+    { label:"Fine + jail — "+person, fn:function(){ showFineAmount(c, verdict, { type:"both", target:person }); } }
+  ];
+  render(hud() + '<h2>Choose the punishment</h2><p class="body">You decide what '+person+' gets.</p>', opts);
+}
+function showFineAmount(c, verdict, sanction){
+  S.screen="fine-amount"; S.sel=0;
+  var opts = FINE_AMOUNTS.map(function(amount){ return { label:amount.label, fn:function(){
+    sanction.amount = amount.text;
+    if (sanction.type === "both") showJailTerm(c, verdict, sanction);
+    else {
+      sanction.summary = sanction.target+" pays a "+sanction.amount+" fine";
+      completeCase(c, verdict, sanction);
+    }
   } }; });
-  render(hud() + '<h2>'+c.rulingTitle+'</h2><p class="body">The evidence is in. The lies are known — to you, anyway. Rule.</p>', opts);
+  render(hud() + '<h2>Set the fine</h2><p class="body">How much should '+sanction.target+' pay?</p>', opts);
 }
-function showSentence(c, rulingOpt){
-  S.screen="sentence"; S.sel=0;
-  var opts = c.sentence.map(function(o){ return { label:o.label, fn:function(){ completeCase(c, rulingOpt, o); } }; });
-  render(hud() + '<h2>'+c.sentenceTitle+'</h2><p class="body">A right ruling with the wrong weight is only half of justice.</p>', opts);
+function showJailTerm(c, verdict, sanction){
+  S.screen="jail-term"; S.sel=0;
+  var opts = JAIL_TERMS.map(function(term){ return { label:term.label, fn:function(){
+    sanction.term = term.text;
+    if (sanction.type === "both") sanction.summary = sanction.target+" pays a "+sanction.amount+" fine and serves "+sanction.term+" in jail";
+    else sanction.summary = sanction.target+" serves "+sanction.term+" in jail";
+    completeCase(c, verdict, sanction);
+  } }; });
+  render(hud() + '<h2>Set the jail time</h2><p class="body">How long should '+sanction.target+' serve?</p>', opts);
 }
-function completeCase(c, rulingOpt, sentOpt){
-  var pts = rulingOpt.pts + (sentOpt ? sentOpt.pts : 0);
-  if (!S.ruled[c.id]){ S.score += pts; S.max += c.max; }
-  else { S.score += (pts - S.ruled[c.id].points); }
-  S.ruled[c.id] = { points:pts };
-  var pages = [ rulingOpt.text ];
-  if (sentOpt) pages.push(sentOpt.text);
-  pages.push('<b>Justice: +'+pts+' of '+c.max+'</b> on this case.');
-  runPages("The Court Rules", pages, showDocket);
+function sanctionText(sanction){
+  if (!sanction || sanction.type === "none") return "You add <b>no fine and no jail time</b>. The order stands exactly as you made it.";
+  if (sanction.type === "fine") return "The clerk records the order: <b>"+sanction.target+" pays a "+sanction.amount+" fine</b>.";
+  if (sanction.type === "jail") return "The bailiff steps forward. <b>"+sanction.target+" will serve "+sanction.term+" in jail</b> on your order.";
+  return "Your order has both: <b>"+sanction.target+" pays a "+sanction.amount+" fine and serves "+sanction.term+" in jail</b>.";
+}
+function completeCase(c, verdict, sanction){
+  S.ruled[c.id] = {
+    verdict:verdict.label,
+    sanctionType:sanction.type,
+    sanctionSummary:sanction.summary,
+    summary:verdict.label+" · "+sanction.summary
+  };
+  var pages = [
+    verdict.text,
+    sanctionText(sanction),
+    "<b>Court order entered:</b><br>"+verdict.label+"<br>"+sanction.summary+"."
+  ];
+  runPages("Judge Realvon Rules", pages, showDocket);
+}
+function courtStyle(){
+  var records = Object.keys(S.ruled).map(function(id){ return S.ruled[id]; });
+  var jail = records.filter(function(r){ return r.sanctionType === "jail" || r.sanctionType === "both"; }).length;
+  var fines = records.filter(function(r){ return r.sanctionType === "fine" || r.sanctionType === "both"; }).length;
+  var dismissals = records.filter(function(r){ return r.verdict.indexOf("Dismiss") === 0; }).length;
+  var none = records.filter(function(r){ return r.sanctionType === "none"; }).length;
+  if (jail >= 3) return { title:"THE IRON GAVEL", body:"You put people in jail today. Word will travel fast: in Judge Realvon's courtroom, the consequences are real." };
+  if (fines >= 3) return { title:"THE COSTLY COURT", body:"You made misconduct expensive today. People leaving this courtroom checked their wallets — and their stories — twice." };
+  if (dismissals >= 3) return { title:"THE SHORT DOCKET", body:"You cleared case after case from the bench. Whether the hallway calls that mercy or mercy with teeth is tomorrow's conversation." };
+  if (none >= 3) return { title:"THE HANDS-OFF BENCH", body:"You decided the cases without reaching for fines or jail. Your courtroom ran on verdicts alone today." };
+  return { title:"THE INDEPENDENT BENCH", body:"Fines, jail, verdicts, and dismissals — you used the full bench your way. No pattern, no script, just Judge Realvon's calls." };
 }
 function finishCourt(){
-  S.screen="end"; S.sel=0;
-  var pct = S.max ? Math.round(100*S.score/S.max) : 0, title, body, rank;
-  if (ruledCount()===0){
-    title="COURT NEVER SAT"; rank="★ Rating: Empty Bench";
-    body="You adjourned before hearing a single case. The litigants are still in the hallway, the coffee's still hot, and justice is still waiting on a judge.";
-  } else if (pct>=90){
-    title="LEGENDARY BENCH"; rank="★ Rating: Supreme Court Material";
-    body="Every liar measured, every ruling weighed to the ounce. People will tell stories about this docket — the day Judge Realvon sat, and nobody, NOBODY, got a lie past that bench.";
-  } else if (pct>=65){
-    title="A FAIR COURT"; rank="★ Rating: Fair and Firm";
-    body="The right calls, mostly with the right weight behind them. This county can trust this bench — and the liars in it have learned to fear it a little.";
-  } else if (pct>=40){
-    title="ROUGH JUSTICE"; rank="★ Rating: The Appeals Court Is Circling";
-    body="Some rulings landed, some flew wide. Justice got served today — just not always to the right table.";
-  } else {
-    title="COURTROOM CHAOS"; rank="★ Rating: Overturned on Appeal";
-    body="The evidence was on the table and the lies were flagged — and the rulings still went the other way. The appeals court sends its regards, and its paperwork.";
+  if (ruledCount() === 0){
+    S.screen="end"; S.sel=0;
+    render(hud() + '<div class="bigemoji">🔨</div><h2 class="center">COURT NEVER SAT</h2>' +
+      '<p class="body">You adjourned before deciding a single case. The litigants are still in the hallway, the coffee\'s still hot, and the decisions are still waiting on the judge.</p>',
+      [ { label:"↻ New court day", fn:function(){ reset(); showTitle(); } } ]);
+    return;
   }
-  render(hud() + '<div class="bigemoji">🔨</div><h2 class="center">'+title+'</h2>' +
-    '<p class="body">'+body+'</p><p class="rank">'+rank+'</p>' +
-    '<p class="body center">Cases ruled: '+ruledCount()+' / '+CASES.length+' · Justice score: '+S.score+' / '+(S.max||0)+'</p>',
-    [ { label:"↻ New court day", fn:function(){ reset(); showTitle(); } } ]);
-  try{ localStorage.setItem("thegavel_rank", rank); }catch(e){}
+  var pages = CASES.filter(function(c){ return !!S.ruled[c.id]; }).map(function(c){
+    var r = S.ruled[c.id];
+    return "<b>"+c.name+"</b><br>Verdict: "+r.verdict+"<br>Order: "+r.sanctionSummary+".";
+  });
+  var style = courtStyle();
+  pages.push('<div class="bigemoji">🔨</div><h2 class="center">'+style.title+'</h2>'+style.body+'<br><br><b>Cases decided: '+ruledCount()+' / '+CASES.length+'</b>');
+  try{ localStorage.setItem("thegavel_style", style.title); }catch(e){}
+  runPages("Judge Realvon's Court Record", pages, function(){ reset(); showTitle(); });
 }
 // ================= Input =================
 function activate(){ var o = currentOpts[S.sel]; if (o && o.fn) o.fn(); }

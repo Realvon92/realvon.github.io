@@ -89,7 +89,8 @@ var INTERVIEWS = {
       ]},
       { q:"\u201CHow were things with Eli?\u201D", pages:[
         "\u201CGood. Great, even. He was about to <b>sell me his half</b> — papers Friday. We were finally on the same page.\u201D",
-        "He smiles when he says it. If you've read Eli's calendar, you know that smile is standing on air."
+        "He smiles when he says it. If you've read Eli's calendar, you know that smile is standing on air.",
+        "⚡ <b>Instinct:</b> there it is again — flat and instant. He's not remembering the deal. He's <i>selling</i> it. To you. The same way he sold it to himself."
       ]},
       { q:"\u201CWhen did you last talk to Eli?\u201D", pages:[
         "\u201CTuesday. Shop stuff.\u201D He holds your eye one second too long. \u201CI had <b>no reason</b> to talk to him last night, detective.\u201D",
@@ -115,7 +116,8 @@ var INTERVIEWS = {
     intro:"Cole hasn't slept. \u201CI know what I said. Everybody heard me say it. But I didn't — I wouldn't — man, just ask your questions.\u201D",
     questions:[
       { q:"\u201CWhy did Eli fire you?\u201D", pages:[
-        "\u201CSaid I was late three times. I was. My little girl's been sick — urgent care half the nights. He didn't care. Yeah, I lost it on him.\u201D"
+        "\u201CSaid I was late three times. I was. My little girl's been sick — urgent care half the nights. He didn't care. Yeah, I lost it on him. Did it in his office, at least — wasn't in front of nobody.\u201D",
+        "⚡ <b>Instinct:</b> tiny catch. Two techs at the counter told the first officer it happened on the shop floor, in front of customers. A nothing-lie about a small thing. Note it — small lies tell you where the shame is, not where the body is."
       ]},
       { q:"\u201CYou said he'd regret it.\u201D", pages:[
         "\u201CI meant the <b>labor board</b>. I filed that same afternoon. You don't hurt a man you're suing — he has to be alive and writing checks to lose.\u201D",
@@ -243,7 +245,7 @@ function showTitle(){
   S.sel=0;
   render('<div class="kicker">A Detective Case</div><h1>NIGHT<br>SHIFT</h1><div class="bigemoji">🔎</div>' +
     '<div class="sub">The Dawson Case — Fayetteville, NC</div>' +
-    '<p class="body center" style="margin-top:16px">A shop owner, murdered in his locked office.<br>Three suspects. Question them all.<br><b>Arrest the real killer.</b></p>',
+    '<p class="body center" style="margin-top:16px">A shop owner, murdered in his locked office.<br>Three suspects. Question them all.<br>They will lie to you. <b>It won\'t work — you detect it the second it\'s said.</b><br>The proof is just what makes it stick for everybody else.</p>',
     [ { label:"▶ Open the case file", fn:showBrief } ]);
 }
 function showBrief(){

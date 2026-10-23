@@ -20,6 +20,9 @@
   .cluebox { border:2px solid #e8b33c; border-radius:12px; padding:10px 13px; margin:9px 0; background:#141005; }
   .cluebox .ct { color:#e8b33c; font-size:16px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
   .cluebox .cb { font-size:20px; line-height:1.28; }
+  .liebox { border:2px solid #5ec8e6; border-radius:12px; padding:10px 13px; margin:9px 0; background:#06121a; }
+  .liebox .ct { color:#5ec8e6; font-size:16px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+  .liebox .cb { font-size:20px; line-height:1.28; color:#eaf7ff; }
   .hud { display:flex; justify-content:space-between; font-size:16px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:7px; margin-bottom:9px; letter-spacing:1px; }
   .hud .gold { color:#e8b33c; }
   .opts { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
@@ -81,21 +84,24 @@ var INTERVIEWS = {
     intro:"Ray is holding it together a little too well. Coffee untouched. Answers ready before your questions land. He stands to inherit the whole shop — and a partner policy pays out if one of them dies.",
     questions:[
       { q:"\u201CWhere were you last night?\u201D", pages:[
-        "\u201CHome. Couch by <b>10:30</b>, asleep before the news ended. Didn't leave, didn't call anybody.\u201D He shrugs. \u201CAsk my dog.\u201D"
+        "\u201CHome. Couch by <b>10:30</b>, asleep before the news ended. Didn't leave, didn't call anybody.\u201D He shrugs. \u201CAsk my dog.\u201D",
+        "⚡ <b>Instinct:</b> no pause, no thinking, every detail lined up in a row. Men remembering a real night have to think. Men reciting one don't."
       ]},
       { q:"\u201CHow were things with Eli?\u201D", pages:[
         "\u201CGood. Great, even. He was about to <b>sell me his half</b> — papers Friday. We were finally on the same page.\u201D",
         "He smiles when he says it. If you've read Eli's calendar, you know that smile is standing on air."
       ]},
       { q:"\u201CWhen did you last talk to Eli?\u201D", pages:[
-        "\u201CTuesday. Shop stuff.\u201D He holds your eye one second too long. \u201CI had <b>no reason</b> to talk to him last night, detective.\u201D"
+        "\u201CTuesday. Shop stuff.\u201D He holds your eye one second too long. \u201CI had <b>no reason</b> to talk to him last night, detective.\u201D",
+        "⚡ <b>Instinct:</b> a partner buyout hanging over the shop — and he had 'no reason' to talk to the man? That sentence was built, not spoken. Find the proof, then come back and press him."
       ]}
     ]},
   lena: { label:"Question Lena — the bookkeeper", name:"Lena Brooks, 39", role:"Bookkeeper at the shop. Eli's ex. She argued with him that evening — half the block heard it.",
     intro:"Lena's eyes are red but her voice is level. \u201CI know how this looks. I yelled at him at 8, and he was dead by 12. So ask me everything, and write it all down.\u201D",
     questions:[
       { q:"\u201CWhy were you at the shop?\u201D", pages:[
-        "\u201CPayroll. Eli shorted my last two checks, and I told him to his face. Yeah, we yelled. Then I left. I wanted my money, detective — <b>dead men don't pay</b>.\u201D"
+        "\u201CPayroll. Eli shorted my last two checks, and I told him to his face. Yeah, we yelled. Then I left. I wanted my money, detective — <b>dead men don't pay</b>.\u201D",
+        "⚡ <b>Instinct:</b> true as far as it goes — but there's a hole in her night, a few hours she stepped around like a puddle. Something happened after 8:40 that she didn't say."
       ]},
       { q:"\u201CWhere did you go after?\u201D", pages:[
         "\u201CDrove around mad awhile. Got coffee at the gas station on <b>Ramsey St, 11:05</b>. I keep every receipt — I'm a bookkeeper.\u201D She slides it across the table. Time, date, and the store's camera log all line up — 25 minutes from the shop, mid-window."
@@ -121,6 +127,38 @@ var INTERVIEWS = {
     ]}
 };
 
+// Press scenes: confront a suspect with proof. needs = clue id required to unlock.
+// Every press has a deflection (blame shifted to someone else) and a story change.
+var PRESS = {
+  ray: [
+    { id:"p_ray_truck", needs:"camera", label:"⚡ Press him: the truck", pages:[
+      "You put the camera stills on the table. <b>10:52 PM</b> in. <b>11:19 PM</b> out. His truck. His logo. He stares a long time. \u201CThat's not — look, you want to be talking to <b>Cole</b>. Kid had it out for Eli, the whole shop heard him threaten\u2014\u201D",
+      "\u201CThe truck, Ray.\u201D And the story changes, right in front of you: \u201C…Okay. I was there. I went to talk him out of killing the buyout. He was <b>alive when I left</b>, I swear it. We argued. That's all.\u201D",
+      '<div class="liebox"><div class="ct">⚡ Lie caught</div><div class="cb">"Home by 10:30, never left." He was at the shop, inside the death window — and his first move was to throw a 22-year-old under the bus. Story #2 already reads different from story #1.</div></div>'
+    ]},
+    { id:"p_ray_text", needs:"text", label:"⚡ Press him: the text", pages:[
+      "You slide the phone across. <b>10:47 PM</b>. <i>'On my way. We need to talk tonight.'</i> — from his number. \u201CThat's… an old draft. It must have sent late, or the phone\u2014\u201D",
+      "\u201CDrafts don't send themselves, Ray.\u201D His shoulders drop an inch. \u201CFine. I texted him. I went over to <b>beg</b> him not to kill the deal. That's ALL it was.\u201D",
+      '<div class="liebox"><div class="ct">⚡ Lie caught</div><div class="cb">"No reason to talk to him last night." He texted a dead man ten minutes before driving to see him. The story keeps changing — and it only changes when you\'re holding the proof.</div></div>'
+    ]}
+  ],
+  lena: [
+    { id:"p_lena_return", needs:"camera", label:"⚡ Press her: the return", pages:[
+      "\u201CYou told me you left at 8:40, Lena. You didn't mention <b>10:43</b>.\u201D The camera still: her sedan, back in the lot. Her face does the math on how bad it looks.",
+      "\u201CI came back for my purse — I was scared you'd think… I <i>know</i> how it looks! But I saw <b>Ray's truck</b> roll in as I was leaving. And if you're looking at somebody, look at Cole — he told the whole shop Eli would 'pay.' Everybody heard it.\u201D",
+      '<div class="liebox"><div class="ct">⚡ Lie caught</div><div class="cb">The omission. She hid the return because it put her inside the window. Scared isn\'t the same as guilty — and notice how the blame lands on the kid, while everything she actually saw points at Ray.</div></div>'
+    ]}
+  ],
+  cole: [
+    { id:"p_cole_fire", needs:null, label:"⚡ Press him: the firing", pages:[
+      "\u201CYou said Eli fired you in his office. Three people told me it was on the shop floor — in front of customers.\u201D Cole goes red all the way to his ears.",
+      "\u201C…Yeah. Okay. I lied about that part. It was humiliating, man. I kicked his truck on my way out — cracked a taillight lens. That's mine, I'll pay for it. But that's ALL that's mine. Ray stood in the doorway laughing while it happened, by the way. Partners, right?\u201D",
+      '<div class="liebox"><div class="ct">⚡ Lie caught</div><div class="cb">A pride lie, not a murder lie. He hid the embarrassing part, not a deadly one. Half this job is knowing the difference — and his deflection at Ray costs him nothing to make.</div></div>'
+    ]}
+  ]
+};
+var TOTAL_LIES = 4;
+
 var SUSPECTS = [
   { id:"ray",  label:"Arrest Ray Delgado — the partner" },
   { id:"lena", label:"Arrest Lena Brooks — the bookkeeper" },
@@ -130,12 +168,12 @@ var SUSPECTS = [
 // ================= Engine =================
 var S, stage = document.getElementById("stage"), currentOpts = [];
 function reset(){
-  S = { clues:{}, searchesDone:{}, asked:{ ray:{}, lena:{}, cole:{} }, metSuspect:{}, sel:0, run:null, ivId:null };
+  S = { clues:{}, searchesDone:{}, asked:{ ray:{}, lena:{}, cole:{} }, metSuspect:{}, pressed:{}, lies:0, sel:0, run:null, ivId:null };
 }
 reset();
 function clueCount(){ return Object.keys(S.clues).length; }
 function hud(){
-  return '<div class="hud"><span>THE DAWSON CASE</span><span>EVIDENCE <span class="gold">'+clueCount()+' / '+TOTAL_CLUES+'</span></span></div>';
+  return '<div class="hud"><span>THE DAWSON CASE</span><span>EVIDENCE <span class="gold">'+clueCount()+' / '+TOTAL_CLUES+'</span> · LIES <span class="gold">'+S.lies+' / '+TOTAL_LIES+'</span></span></div>';
 }
 var lastRender = null;
 function render(html, opts){
@@ -212,7 +250,7 @@ function showBrief(){
   S.sel=0;
   render(hud() + '<h2>The Case</h2>' +
     '<p class="body"><b>Eli Dawson, 41</b>, owner of Dawson\'s Auto &amp; Tire off Bragg Blvd, was found dead in his locked office just after <b>11 PM</b>. Nobody broke in. Somebody he knew did this.</p>' +
-    '<p class="body">Work it your way: search the shop, pull the cameras, and <b>question all three suspects</b>. Then make the arrest. Arrest the wrong person — or the right one on thin evidence — and the killer walks.</p>',
+    '<p class="body">Work it your way: search the shop, pull the cameras, and <b>question all three suspects</b>. Trust your ⚡ <b>instinct</b> when it flags a lie — then find the proof and <b>press them with it</b>. They\'ll deflect, throw each other under the bus, and change their stories. Catch enough lies, and a guilty man breaks. Then make the arrest.</p>',
     [ { label:"Start investigating →", fn:showHub } ]);
 }
 function showHub(){
@@ -248,6 +286,20 @@ function showQuestions(){
       runPages("Asking "+iv.name.split(",")[0], q.pages, q.clues||[], function(){ S.asked[id][qi]=true; showQuestions(); });
     } };
   });
+  (PRESS[id]||[]).forEach(function(p){
+    var done = !!S.pressed[p.id], unlocked = !p.needs || !!S.clues[p.needs];
+    if (done){
+      opts.push({ label:'<span class="tick">✓</span> '+p.label, cls:"done", fn:function(){
+        runPages("Pressing "+iv.name.split(",")[0], p.pages, [], function(){ showQuestions(); });
+      } });
+    } else if (unlocked){
+      opts.push({ label:p.label, fn:function(){
+        runPages("Pressing "+iv.name.split(",")[0], p.pages, [], function(){ S.pressed[p.id]=true; S.lies++; showQuestions(); });
+      } });
+    } else {
+      opts.push({ label:"🔒 "+p.label.replace("⚡ ","")+" — find the proof first", cls:"done", fn:showQuestions });
+    }
+  });
   opts.push({ label:"← Back to the board", fn:showHub });
   if (S.sel >= opts.length) S.sel = 0;
   render(hud() + '<h2>Questioning: '+iv.name+'</h2><p class="body">Pick your question.</p>', opts);
@@ -263,7 +315,10 @@ function showArrest(){
 }
 function finish(suspectId){
   var n = clueCount(), correct = (suspectId==="ray"), title, body, rank;
-  if (correct && n>=7){
+  if (correct && n>=7 && S.lies>=3){
+    title="KILLER BROKEN IN THE BOX"; rank="★ Rank: World's Best Detective";
+    body="You didn't just build the case — you dismantled the man. Every lie Ray Delgado told, you were already holding the proof: the truck, the text, the story that changed every time you set a new page on the table. He blamed a kid. He rewrote his night twice. And then he ran out of versions. The confession takes eleven minutes. Eli's shop stays in Eli's name — and there's a new story they tell at the precinct about the detective nobody can lie to.";
+  } else if (correct && n>=7){
     title="KILLER BOOKED"; rank="★ Rank: Sharp-Eye Detective";
     body="Text at 10:47. Truck at 10:52. A witness who saw it. A door locked with his key, a buyout Eli had already refused, and a payout waiting on a death. You set it all on the table, one page at a time — and Ray Delgado stops smiling. He confesses before the recorder's light goes red. Eli's shop stays in Eli's name.";
   } else if (correct && n>=5){
@@ -279,7 +334,7 @@ function finish(suspectId){
   S.sel = 0;
   render(hud() + '<div class="bigemoji">'+(correct?"🕵️":"🧊")+'</div><h2 class="center">'+title+'</h2>' +
     '<p class="body">'+body+'</p><p class="rank">'+rank+'</p>' +
-    '<p class="body center">Evidence collected: '+n+' / '+TOTAL_CLUES+'</p>',
+    '<p class="body center">Evidence collected: '+n+' / '+TOTAL_CLUES+' · Lies caught: '+S.lies+' / '+TOTAL_LIES+'</p>',
     [ { label:"↻ Work the case again", fn:function(){ reset(); showTitle(); } } ]);
   try{ localStorage.setItem("nightshift_dawson_rank", rank+" ("+n+"/"+TOTAL_CLUES+")"); }catch(e){}
 }

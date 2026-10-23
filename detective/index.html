@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
 <title>Night Shift — The Dawson Case · A Detective Game for Ray-Ban Display</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -28,6 +30,10 @@
   .hint { text-align:center; color:#77705f; font-size:15px; margin-top:9px; font-style:italic; }
   .bigemoji { text-align:center; font-size:54px; margin:6px 0; }
   .rank { text-align:center; font-size:25px; color:#e8b33c; margin:8px 0; }
+  .focus { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .fside { text-align:center; color:#8a8271; font-size:19px; padding:5px 10px; cursor:pointer; line-height:1.2; }
+  .fcur { border:3px solid #e8b33c; background:#1c1503; color:#fff; border-radius:14px; padding:17px 15px; font-size:26px; text-align:center; cursor:pointer; line-height:1.25; }
+  .fpos { text-align:center; color:#77705f; font-size:15px; }
   .center { text-align:center; }
 </style>
 </head>
@@ -131,14 +137,47 @@ function clueCount(){ return Object.keys(S.clues).length; }
 function hud(){
   return '<div class="hud"><span>THE DAWSON CASE</span><span>EVIDENCE <span class="gold">'+clueCount()+' / '+TOTAL_CLUES+'</span></span></div>';
 }
+var lastRender = null;
 function render(html, opts){
   currentOpts = opts || [];
-  stage.innerHTML = html + '<div class="opts">' +
-    currentOpts.map(function(o,i){ return '<div class="opt'+(i===S.sel?' sel':'')+(o.cls?' '+o.cls:'')+'" data-i="'+i+'">'+o.label+'</div>'; }).join("") +
-    '</div><div class="hint">Swipe to move · Pinch / tap to choose</div>';
+  lastRender = { html:html, opts:currentOpts };
+  var menuHtml;
+  if (currentOpts.length <= 1){
+    menuHtml = '<div class="opts">' + currentOpts.map(function(o,i){
+      return '<div class="opt sel" data-i="'+i+'">'+o.label+'</div>'; }).join("") + '</div>';
+  } else {
+    var n = currentOpts.length, cur = currentOpts[S.sel];
+    var prev = currentOpts[(S.sel-1+n)%n], next = currentOpts[(S.sel+1)%n];
+    menuHtml = '<div class="focus">' +
+      '<div class="fside" id="fprev">▲ '+prev.label+'</div>' +
+      '<div class="fcur" id="fcur">'+cur.label+'</div>' +
+      '<div class="fside" id="fnext">▼ '+next.label+'</div>' +
+      '<div class="fpos">'+(S.sel+1)+' of '+n+' — swipe to browse, pinch the gold box to choose</div></div>';
+  }
+  stage.innerHTML = html + menuHtml + '<div class="hint">Swipe to move · Pinch / tap to choose</div>';
   Array.prototype.forEach.call(stage.querySelectorAll(".opt"), function(el){
     el.addEventListener("click", function(){ S.sel=parseInt(el.getAttribute("data-i"),10); activate(); });
   });
+  var fp = document.getElementById("fprev"), fc = document.getElementById("fcur"), fn = document.getElementById("fnext");
+  if (fp) fp.addEventListener("click", function(){ move(-1); });
+  if (fn) fn.addEventListener("click", function(){ move(1); });
+  if (fc) fc.addEventListener("click", function(){ activate(); });
+  fitToLens();
+}
+// Shrink the whole stage if content is taller than the visible lens area
+// (e.g. when the glasses' text size is turned up) so nothing is cut off.
+function fitToLens(){
+  try{
+    requestAnimationFrame(function(){
+      stage.style.transform = "";
+      var need = stage.scrollHeight, avail = window.innerHeight || 600;
+      if (need > avail){
+        var sc = Math.max(0.45, (avail/need)*0.99);
+        stage.style.transformOrigin = "top center";
+        stage.style.transform = "scale("+sc+")";
+      }
+    });
+  }catch(e){}
 }
 function clueBoxes(ids){
   var fresh = ids.filter(function(id){ return !S.clues[id]; });
@@ -249,9 +288,7 @@ function activate(){ var o = currentOpts[S.sel]; if (o && o.fn) o.fn(); }
 function move(d){
   if (!currentOpts.length) return;
   S.sel = (S.sel + d + currentOpts.length) % currentOpts.length;
-  Array.prototype.forEach.call(stage.querySelectorAll(".opt"), function(el, i){
-    if (i===S.sel) el.classList.add("sel"); else el.classList.remove("sel");
-  });
+  if (lastRender) render(lastRender.html, lastRender.opts);
 }
 document.addEventListener("keydown", function(e){
   if (e.key==="ArrowDown" || e.key==="ArrowRight"){ move(1); e.preventDefault(); }

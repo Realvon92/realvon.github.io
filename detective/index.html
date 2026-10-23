@@ -7,27 +7,27 @@
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
-  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:34px 40px; display:flex; flex-direction:column; }
-  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:22px 20px; } }
-  .kicker { color:#e8b33c; letter-spacing:3px; font-size:17px; text-transform:uppercase; text-align:center; }
-  h1 { font-size:52px; text-align:center; line-height:1.05; margin:14px 0 6px; color:#fff; }
-  h2 { font-size:32px; line-height:1.15; margin:8px 0 12px; color:#fff; }
-  .sub { text-align:center; color:#bdb49e; font-size:21px; font-style:italic; }
-  .body { font-size:25px; line-height:1.38; color:#efe9da; margin:10px 0; }
+  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:20px 30px 14px; display:flex; flex-direction:column; }
+  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:18px 16px; } }
+  .kicker { color:#e8b33c; letter-spacing:3px; font-size:15px; text-transform:uppercase; text-align:center; }
+  h1 { font-size:44px; text-align:center; line-height:1.05; margin:10px 0 4px; color:#fff; }
+  h2 { font-size:28px; line-height:1.15; margin:6px 0 9px; color:#fff; }
+  .sub { text-align:center; color:#bdb49e; font-size:19px; font-style:italic; }
+  .body { font-size:22px; line-height:1.32; color:#efe9da; margin:8px 0; }
   .body b { color:#e8b33c; }
-  .cluebox { border:2px solid #e8b33c; border-radius:14px; padding:14px 16px; margin:12px 0; background:#141005; }
-  .cluebox .ct { color:#e8b33c; font-size:18px; letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
-  .cluebox .cb { font-size:23px; line-height:1.3; }
-  .hud { display:flex; justify-content:space-between; font-size:19px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:12px; letter-spacing:1px; }
+  .cluebox { border:2px solid #e8b33c; border-radius:12px; padding:10px 13px; margin:9px 0; background:#141005; }
+  .cluebox .ct { color:#e8b33c; font-size:16px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; }
+  .cluebox .cb { font-size:20px; line-height:1.28; }
+  .hud { display:flex; justify-content:space-between; font-size:16px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:7px; margin-bottom:9px; letter-spacing:1px; }
   .hud .gold { color:#e8b33c; }
-  .opts { margin-top:auto; display:flex; flex-direction:column; gap:11px; }
-  .opt { border:2px solid #3d3d3d; border-radius:14px; padding:14px 17px; font-size:24px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.22; }
+  .opts { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+  .opt { border:2px solid #3d3d3d; border-radius:12px; padding:10px 13px; font-size:21px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.2; }
   .opt.sel { border-color:#e8b33c; color:#fff; background:#1c1503; }
   .opt.done { opacity:.5; }
   .opt .tick { color:#7fc96b; }
-  .hint { text-align:center; color:#77705f; font-size:18px; margin-top:13px; font-style:italic; }
-  .bigemoji { text-align:center; font-size:72px; margin:8px 0; }
-  .rank { text-align:center; font-size:29px; color:#e8b33c; margin:10px 0; }
+  .hint { text-align:center; color:#77705f; font-size:15px; margin-top:9px; font-style:italic; }
+  .bigemoji { text-align:center; font-size:54px; margin:6px 0; }
+  .rank { text-align:center; font-size:25px; color:#e8b33c; margin:8px 0; }
   .center { text-align:center; }
 </style>
 </head>
@@ -141,9 +141,11 @@ function render(html, opts){
   });
 }
 function clueBoxes(ids){
-  return ids.filter(function(id){ return !S.clues[id]; }).map(function(id){
-    return '<div class="cluebox"><div class="ct">🔎 Evidence logged</div><div class="cb">'+CLUES[id]+'</div></div>';
-  }).join("");
+  var fresh = ids.filter(function(id){ return !S.clues[id]; });
+  if (!fresh.length) return "";
+  return '<div class="cluebox"><div class="ct">🔎 Evidence logged</div>' +
+    fresh.map(function(id){ return '<div class="cb" style="margin:6px 0">'+CLUES[id]+'</div>'; }).join("") +
+    '</div>';
 }
 // Page runner: pages -> then onDone()
 function runPages(title, pages, clues, onDone){
@@ -186,7 +188,7 @@ function showHub(){
   });
   opts.push({ label:"🚔 Arrest a suspect", fn:showArrest });
   if (S.sel >= opts.length) S.sel = 0;
-  render(hud() + '<h2>Where to, Detective?</h2><p class="body">Search, watch, question. The arrest is yours to make whenever you\'re ready.</p>', opts);
+  render(hud() + '<h2>Where to, Detective?</h2>', opts);
 }
 function openSearch(id){
   var n = SEARCHES[id];

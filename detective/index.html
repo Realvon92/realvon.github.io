@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Night Shift — A Detective Case for Ray-Ban Display</title>
+<title>Night Shift — The Dawson Case · A Detective Game for Ray-Ban Display</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
   html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
@@ -11,23 +11,23 @@
   @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:22px 20px; } }
   .kicker { color:#e8b33c; letter-spacing:3px; font-size:17px; text-transform:uppercase; text-align:center; }
   h1 { font-size:52px; text-align:center; line-height:1.05; margin:14px 0 6px; color:#fff; }
-  h2 { font-size:34px; line-height:1.15; margin:8px 0 12px; color:#fff; }
+  h2 { font-size:32px; line-height:1.15; margin:8px 0 12px; color:#fff; }
   .sub { text-align:center; color:#bdb49e; font-size:21px; font-style:italic; }
-  .body { font-size:26px; line-height:1.38; color:#efe9da; margin:10px 0; }
+  .body { font-size:25px; line-height:1.38; color:#efe9da; margin:10px 0; }
   .body b { color:#e8b33c; }
-  .cluebox { border:2px solid #e8b33c; border-radius:14px; padding:16px 18px; margin:14px 0; background:#141005; }
-  .cluebox .ct { color:#e8b33c; font-size:19px; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
-  .cluebox .cb { font-size:25px; line-height:1.32; }
+  .cluebox { border:2px solid #e8b33c; border-radius:14px; padding:14px 16px; margin:12px 0; background:#141005; }
+  .cluebox .ct { color:#e8b33c; font-size:18px; letter-spacing:2px; text-transform:uppercase; margin-bottom:5px; }
+  .cluebox .cb { font-size:23px; line-height:1.3; }
   .hud { display:flex; justify-content:space-between; font-size:19px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:10px; margin-bottom:12px; letter-spacing:1px; }
   .hud .gold { color:#e8b33c; }
-  .opts { margin-top:auto; display:flex; flex-direction:column; gap:12px; }
-  .opt { border:2px solid #3d3d3d; border-radius:14px; padding:15px 18px; font-size:26px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.2; }
+  .opts { margin-top:auto; display:flex; flex-direction:column; gap:11px; }
+  .opt { border:2px solid #3d3d3d; border-radius:14px; padding:14px 17px; font-size:24px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.22; }
   .opt.sel { border-color:#e8b33c; color:#fff; background:#1c1503; }
-  .opt.done { opacity:.45; }
+  .opt.done { opacity:.5; }
   .opt .tick { color:#7fc96b; }
-  .hint { text-align:center; color:#77705f; font-size:18px; margin-top:14px; font-style:italic; }
-  .bigemoji { text-align:center; font-size:74px; margin:8px 0; }
-  .rank { text-align:center; font-size:30px; color:#e8b33c; margin:10px 0; }
+  .hint { text-align:center; color:#77705f; font-size:18px; margin-top:13px; font-style:italic; }
+  .bigemoji { text-align:center; font-size:72px; margin:8px 0; }
+  .rank { text-align:center; font-size:29px; color:#e8b33c; margin:10px 0; }
   .center { text-align:center; }
 </style>
 </head>
@@ -35,202 +35,218 @@
 <div id="stage"></div>
 <script>
 "use strict";
-// ============ NIGHT SHIFT — a detective case built for the Ray-Ban Display ============
+// ================= NIGHT SHIFT: THE DAWSON CASE =================
+// A murder case for the Ray-Ban Display. Question the suspects, work the
+// scene, collect the evidence — then arrest the killer.
 // Controls: Neural Band swipe = move, pinch = select.
 // Phone/browser preview: tap, swipe, or Arrow keys + Enter.
 
 var CLUES = {
-  key:   "Key, Not Force — the display case was opened cleanly with a key. No break-in.",
-  mud:   "Cut Tread — a fresh muddy print by the back door: size 9, with a diagonal cut in the tread.",
-  alarm: "Alarm Log — the alarm was disarmed at 11:42 PM with Marcus's own code, and never set at 11:30 like he claimed.",
-  camera:"Empty Aisle — front cameras show the store dark and empty 11:40 PM–12:10 AM. A sedan with its left taillight out left the lot at 12:03 AM.",
-  slip:  "The Slip — Marcus said he 'never goes near the back room,' then described the prototype's blue foam. That detail was never released.",
-  tail:  "Taillight & Timeline — Tanya: Marcus's left taillight has been out for weeks, and his car was still in the lot at 12:05 AM, when he claims he was home.",
-  offer: "Cash Offer — two days before the theft, Marcus quietly offered Dev 'something rare, cash only.'"
+  key:     "The Other Key — Eli's own key was still in his pocket, and the office was locked. Only two office keys exist. The other one is Ray's.",
+  calendar:"The Refused Buyout — Eli's calendar, for Friday: 'Tell Ray — NO deal.' He was never selling his half of the shop.",
+  text:    "The Text — 10:47 PM, from Ray: 'On my way. We need to talk tonight.' Ray swore he never contacted Eli that night.",
+  inside:  "An Inside Job — no forced entry anywhere on the building. The killer was let in, or carried a key.",
+  camera:  "The Truck — lot camera: Ray's truck rolls in at 10:52 PM and out at 11:19 PM. Eli died right inside that window. Nobody else came or went.",
+  receipt: "Lena Cleared — her gas-station receipt: coffee on Ramsey St, on camera, 11:05 PM — 25 minutes away, mid-window.",
+  witness: "The Witness — Lena came back at 10:43 PM for her purse and watched Ray's truck pull in, lights off. Ray claims he was home by 10:30.",
+  cole:    "Cole Cleared — he turned in his shop keys at 9:12 AM when he was fired, and a timestamped cookout video has him across town all night."
 };
-var TOTAL_CLUES = 7;
+var TOTAL_CLUES = 8;
 
-var S;
-function reset(){
-  S = { mode:"title", sel:0, page:0, node:null, clues:{}, done:{}, ending:null };
-}
-reset();
-
-function clueCount(){ return Object.keys(S.clues).length; }
-function giveClue(id){ S.clues[id]=true; }
-
-// Investigation nodes: pages = array of HTML strings. Last page shows the clue box if clue set.
-var NODES = {
-  scene: { title:"Search: The Case & Back Door", clue:"key", pages:[
-    "The <b>Pixel Vault</b> game shop, Skibo Road. Overnight, somebody took the shop's crown jewel: a one-of-a-kind <b>prototype console</b>, locked in a glass case in the back room.",
-    "You check the case first. No smashed glass. No pried lock. The case was <b>opened with a key</b> — calmly, by somebody who belonged here.",
-    "At the back door: one fresh print in the red mud outside. You photograph it before it dries."
-  ], clue2:"mud" },
-  office: { title:"Search: The Office & Alarm Log", clue:"alarm", pages:[
-    "The office is small: a desk, the alarm panel printout, and a hook where the <b>spare case key</b> hangs. The spare is still there — so the thief used an original.",
-    "The alarm log is the loudest thing in the room. The alarm was <b>never set at 11:30 PM</b>, when clerk Marcus Webb says he locked up and left.",
-    "It was <b>disarmed at 11:42 PM — with Marcus's personal code</b> — and set again at 12:07 AM. Somebody came back. Or never left."
+var SEARCHES = {
+  office: { label:"Search Eli's office", title:"Search: Eli's Office", clues:["key","calendar","text"], pages:[
+    "The office door was <b>locked</b> when the call came in. Eli's own office key is still in his pocket. So whoever locked this door used <b>the only other key</b> — and walked out calm.",
+    "His desk calendar is open to Friday, in his own hand: <i>'Sign papers? NO. Tell Ray — NO deal. This shop stays mine.'</i> He was never selling. Not at any price.",
+    "His phone sits face-down by the desk. Last text, <b>10:47 PM</b>, from his partner Ray: <i>'On my way. We need to talk tonight.'</i>"
   ]},
-  cameras: { title:"Watch: The Camera Footage", clue:"camera", pages:[
-    "Marcus told the owner he spent the slow last hour <b>restocking the front aisles</b>. You pull the front camera for 11:40 PM to 12:10 AM.",
-    "Dark. Empty. Not one frame of Marcus, or anybody, in the front of the store. His story just lost its floor.",
-    "The lot camera catches one thing at <b>12:03 AM</b>: a dark sedan backing out — <b>left taillight out</b>. Plates covered in mud."
+  bay: { label:"Search the back bay", title:"Search: The Back Bay", clues:["inside"], pages:[
+    "You walk every door and window. No pry marks. No cut screens. No broken glass. <b>No forced entry anywhere.</b>",
+    "The tools are racked, the lift is down, nothing is stolen. Whoever killed Eli Dawson didn't break in — <b>they belonged here, or they had a key.</b>"
   ]},
-  marcus: { title:"Interview: Marcus Webb, Clerk", clue:"slip", pages:[
-    "Marcus, 24, works the register and closes alone. Hands shaking. He owes <b>$900 on a repair for his Sonata</b> — he tells you that himself, like it explains the shaking.",
-    "\u201CI locked up at 11:30, set the alarm, went home. I never go near the back room — that's Rosa's thing, with the case and the <b>blue foam</b> it sits in.\u201D",
-    "Stop. The prototype's <b>blue foam</b> was never in the press, never in the listing, never said out loud tonight. He just told on himself — a little."
-  ]},
-  tanya: { title:"Interview: Tanya Ruiz, Driver", clue:"tail", pages:[
-    "Tanya, 31, runs the delivery route. Her van's GPS puts her in <b>Raleigh by midnight</b> — the shop's 11:51 PM delivery-dock ping was her scheduled drop, logged and gone by 11:20.",
-    "\u201CYou want a detail? Marcus's sedan — that <b>left taillight's been out for weeks</b>. We tease him about it. And his car was still in the lot when I rolled past at five after twelve.\u201D",
-    "Her boots are size 8, clean, and dry. Nothing about Tanya fits the back door. You cross her off — for now."
-  ] },
-  dev: { title:"Interview: Dev Okafor, Collector", clue:"offer", pages:[
-    "Dev, 28, is the obvious suspect: the collector who posted he'd <b>'pay anything'</b> for that prototype. He doesn't even get nervous.",
-    "\u201CDetective, I was live. Eleven to two, streaming, four hundred people in chat, timestamped. Check it.\u201D You do. He's telling the truth — Dev never left his desk.",
-    "Then he leans in. \u201CBut ask Marcus why, two days ago, he offered me <b>'something rare, cash only, no receipt.'</b> I said no. Felt dirty.\u201D"
+  cameras: { label:"Watch the lot cameras", title:"Watch: The Lot Cameras", clues:["camera"], pages:[
+    "One camera over the lot. Grainy, but honest. <b>8:40 PM:</b> Lena's sedan pulls out. <b>10:43 PM:</b> the same sedan swings back in for two minutes — then gone. Just like she said.",
+    "<b>10:52 PM:</b> a pickup rolls in slow, lights off before it stops. Shop logo on the door. <b>Ray's truck.</b> <b>11:19 PM:</b> it rolls back out.",
+    "Between those two timestamps, <b>nobody else comes or goes</b>. And Eli Dawson died between those two timestamps."
   ]}
 };
-var HUB_ACTIONS = [
-  { id:"scene",   label:"Search the case & back door" },
-  { id:"office",  label:"Search the office & alarm log" },
-  { id:"cameras", label:"Watch the camera footage" },
-  { id:"marcus",  label:"Interview Marcus — the clerk" },
-  { id:"tanya",   label:"Interview Tanya — the driver" },
-  { id:"dev",     label:"Interview Dev — the collector" },
-  { id:"accuse",  label:"⚖️ Make your accusation" }
-];
+
+var INTERVIEWS = {
+  ray: { label:"Question Ray — the partner", name:"Ray Delgado, 43", role:"Eli's business partner — they built the shop together.",
+    intro:"Ray is holding it together a little too well. Coffee untouched. Answers ready before your questions land. He stands to inherit the whole shop — and a partner policy pays out if one of them dies.",
+    questions:[
+      { q:"\u201CWhere were you last night?\u201D", pages:[
+        "\u201CHome. Couch by <b>10:30</b>, asleep before the news ended. Didn't leave, didn't call anybody.\u201D He shrugs. \u201CAsk my dog.\u201D"
+      ]},
+      { q:"\u201CHow were things with Eli?\u201D", pages:[
+        "\u201CGood. Great, even. He was about to <b>sell me his half</b> — papers Friday. We were finally on the same page.\u201D",
+        "He smiles when he says it. If you've read Eli's calendar, you know that smile is standing on air."
+      ]},
+      { q:"\u201CWhen did you last talk to Eli?\u201D", pages:[
+        "\u201CTuesday. Shop stuff.\u201D He holds your eye one second too long. \u201CI had <b>no reason</b> to talk to him last night, detective.\u201D"
+      ]}
+    ]},
+  lena: { label:"Question Lena — the bookkeeper", name:"Lena Brooks, 39", role:"Bookkeeper at the shop. Eli's ex. She argued with him that evening — half the block heard it.",
+    intro:"Lena's eyes are red but her voice is level. \u201CI know how this looks. I yelled at him at 8, and he was dead by 12. So ask me everything, and write it all down.\u201D",
+    questions:[
+      { q:"\u201CWhy were you at the shop?\u201D", pages:[
+        "\u201CPayroll. Eli shorted my last two checks, and I told him to his face. Yeah, we yelled. Then I left. I wanted my money, detective — <b>dead men don't pay</b>.\u201D"
+      ]},
+      { q:"\u201CWhere did you go after?\u201D", pages:[
+        "\u201CDrove around mad awhile. Got coffee at the gas station on <b>Ramsey St, 11:05</b>. I keep every receipt — I'm a bookkeeper.\u201D She slides it across the table. Time, date, and the store's camera log all line up — 25 minutes from the shop, mid-window."
+      ], clues:["receipt"]},
+      { q:"\u201CDid you see anyone that night?\u201D", pages:[
+        "\u201CI'd left my purse in my car. Came back at <b>10:43</b> to grab it — and watched <b>Ray's truck</b> pull in, lights off. Figured it was partner business. I got out of there.\u201D",
+        "\u201CHe told you he was home at 10:30, didn't he? Yeah. He would.\u201D"
+      ], clues:["witness"]}
+    ]},
+  cole: { label:"Question Cole — the fired mechanic", name:"Cole Mercer, 22", role:"Mechanic. Eli fired him that morning, in front of customers. He told Eli he'd regret it.",
+    intro:"Cole hasn't slept. \u201CI know what I said. Everybody heard me say it. But I didn't — I wouldn't — man, just ask your questions.\u201D",
+    questions:[
+      { q:"\u201CWhy did Eli fire you?\u201D", pages:[
+        "\u201CSaid I was late three times. I was. My little girl's been sick — urgent care half the nights. He didn't care. Yeah, I lost it on him.\u201D"
+      ]},
+      { q:"\u201CYou said he'd regret it.\u201D", pages:[
+        "\u201CI meant the <b>labor board</b>. I filed that same afternoon. You don't hurt a man you're suing — he has to be alive and writing checks to lose.\u201D",
+        "The records back him twice: desk log shows his <b>shop keys turned in at 9:12 AM</b>, and his sister's cookout video — timestamped, across town, 9 PM to midnight — has him at the grill all night."
+      ], clues:["cole"]},
+      { q:"\u201CWho'd want Eli dead?\u201D", pages:[
+        "\u201CFollow the money, detective. Eli told me himself last week: Ray's been pushing the buyout hard, and if one partner dies, the other gets the shop <b>and</b> the payout. Ask Ray about Friday.\u201D"
+      ]}
+    ]}
+};
 
 var SUSPECTS = [
-  { id:"marcus", label:"Marcus Webb — the clerk" },
-  { id:"tanya",  label:"Tanya Ruiz — the driver" },
-  { id:"dev",    label:"Dev Okafor — the collector" }
+  { id:"ray",  label:"Arrest Ray Delgado — the partner" },
+  { id:"lena", label:"Arrest Lena Brooks — the bookkeeper" },
+  { id:"cole", label:"Arrest Cole Mercer — the mechanic" }
 ];
 
-// ============ Rendering ============
-var stage = document.getElementById("stage");
-var currentOpts = []; // [{label, cls, fn}]
-
+// ================= Engine =================
+var S, stage = document.getElementById("stage"), currentOpts = [];
+function reset(){
+  S = { clues:{}, searchesDone:{}, asked:{ ray:{}, lena:{}, cole:{} }, metSuspect:{}, sel:0, run:null, ivId:null };
+}
+reset();
+function clueCount(){ return Object.keys(S.clues).length; }
 function hud(){
-  return '<div class="hud"><span>NIGHT SHIFT</span><span>CLUES <span class="gold">'+clueCount()+' / '+TOTAL_CLUES+'</span></span></div>';
+  return '<div class="hud"><span>THE DAWSON CASE</span><span>EVIDENCE <span class="gold">'+clueCount()+' / '+TOTAL_CLUES+'</span></span></div>';
 }
 function render(html, opts){
   currentOpts = opts || [];
   stage.innerHTML = html + '<div class="opts">' +
     currentOpts.map(function(o,i){ return '<div class="opt'+(i===S.sel?' sel':'')+(o.cls?' '+o.cls:'')+'" data-i="'+i+'">'+o.label+'</div>'; }).join("") +
-    '</div>' + '<div class="hint">Swipe to move · Pinch / tap to choose</div>';
+    '</div><div class="hint">Swipe to move · Pinch / tap to choose</div>';
   Array.prototype.forEach.call(stage.querySelectorAll(".opt"), function(el){
-    el.addEventListener("click", function(){ S.sel = parseInt(el.getAttribute("data-i"),10); activate(); });
+    el.addEventListener("click", function(){ S.sel=parseInt(el.getAttribute("data-i"),10); activate(); });
   });
 }
-
-function showTitle(){
-  S.mode="title"; S.sel=0;
-  render(
-    '<div class="kicker">A Detective Case</div><h1>NIGHT<br>SHIFT</h1>' +
-    '<div class="bigemoji">🔎</div>' +
-    '<div class="sub">The Skibo Road Case — Fayetteville, NC</div>' +
-    '<p class="body center" style="margin-top:18px">A rare prototype console, gone overnight.<br>No break-in. Three suspects. One liar.</p>',
-    [ { label:"▶ Start the case", fn:showBrief } ]
-  );
+function clueBoxes(ids){
+  return ids.filter(function(id){ return !S.clues[id]; }).map(function(id){
+    return '<div class="cluebox"><div class="ct">🔎 Evidence logged</div><div class="cb">'+CLUES[id]+'</div></div>';
+  }).join("");
 }
-function showBrief(){
-  S.mode="story"; S.sel=0;
-  render( hud() +
-    '<h2>The Briefing</h2>' +
-    '<p class="body">Rosa, the owner, found the case empty at 7 AM. The prototype is worth <b>$18,000</b> to the right buyer — and it can\'t be replaced.</p>' +
-    '<p class="body">Work the case your way: search, watch, interview. Collect clues. When you\'re ready, accuse. Accuse thin, and a guilty man may walk.</p>',
-    [ { label:"Begin investigating →", fn:showHub } ]
-  );
+// Page runner: pages -> then onDone()
+function runPages(title, pages, clues, onDone){
+  S.run = { title:title, pages:pages, clues:clues||[], i:0, onDone:onDone };
+  showRunPage();
 }
-function showHub(){
-  S.mode="hub";
-  if (S.sel >= HUB_ACTIONS.length) S.sel = 0;
-  var opts = HUB_ACTIONS.map(function(a){
-    var done = !!S.done[a.id];
-    return { label:(done?'<span class="tick">✓</span> ':'')+a.label, cls:done?"done":"", fn:function(){ openAction(a.id); } };
-  });
-  render( hud() + '<h2>Where to, Detective?</h2>' +
-    '<p class="body">Pick your next move. Re-checking a spot is fine — clues don\'t move.</p>', opts);
-}
-function openAction(id){
-  if (id==="accuse"){ showAccuse(); return; }
-  var node = NODES[id];
-  S.node = node; S.nodeId = id; S.page = 0; S.mode="node";
-  showNodePage();
-}
-function showNodePage(){
-  var node = S.node, last = S.page === node.pages.length-1;
-  var html = hud() + '<h2>'+node.title+'</h2>' + '<p class="body">'+node.pages[S.page]+'</p>';
-  if (last && node.clue && !S.done[S.nodeId]){
-    html += '<div class="cluebox"><div class="ct">🔎 Clue found</div><div class="cb">'+CLUES[node.clue]+'</div></div>';
-    if (node.clue2){ html += '<div class="cluebox"><div class="ct">🔎 Clue found</div><div class="cb">'+CLUES[node.clue2]+'</div></div>'; }
-  }
-  if (last && S.done[S.nodeId]){
-    html += '<p class="body" style="color:#9d9582"><i>You\'ve already worked this one over.</i></p>';
-  }
+function showRunPage(){
+  var r = S.run, last = r.i === r.pages.length-1;
+  var html = hud() + '<h2>'+r.title+'</h2><p class="body">'+r.pages[r.i]+'</p>';
+  if (last) html += clueBoxes(r.clues);
   S.sel = 0;
-  render(html, [ { label: last ? "Back to the board →" : "Continue →", fn:function(){
-    if (!last){ S.page++; showNodePage(); }
-    else {
-      if (!S.done[S.nodeId]){
-        if (node.clue) giveClue(node.clue);
-        if (node.clue2) giveClue(node.clue2);
-        S.done[S.nodeId]=true;
-      }
-      showHub();
-    }
+  render(html, [ { label: last ? "Done →" : "Continue →", fn:function(){
+    if (!last){ r.i++; showRunPage(); }
+    else { r.clues.forEach(function(id){ S.clues[id]=true; }); var d=r.onDone; S.run=null; d(); }
   } } ]);
 }
-function showAccuse(){
-  S.mode="accuse"; S.sel=0;
+function showTitle(){
+  S.sel=0;
+  render('<div class="kicker">A Detective Case</div><h1>NIGHT<br>SHIFT</h1><div class="bigemoji">🔎</div>' +
+    '<div class="sub">The Dawson Case — Fayetteville, NC</div>' +
+    '<p class="body center" style="margin-top:16px">A shop owner, murdered in his locked office.<br>Three suspects. Question them all.<br><b>Arrest the real killer.</b></p>',
+    [ { label:"▶ Open the case file", fn:showBrief } ]);
+}
+function showBrief(){
+  S.sel=0;
+  render(hud() + '<h2>The Case</h2>' +
+    '<p class="body"><b>Eli Dawson, 41</b>, owner of Dawson\'s Auto &amp; Tire off Bragg Blvd, was found dead in his locked office just after <b>11 PM</b>. Nobody broke in. Somebody he knew did this.</p>' +
+    '<p class="body">Work it your way: search the shop, pull the cameras, and <b>question all three suspects</b>. Then make the arrest. Arrest the wrong person — or the right one on thin evidence — and the killer walks.</p>',
+    [ { label:"Start investigating →", fn:showHub } ]);
+}
+function showHub(){
+  var opts = [];
+  Object.keys(SEARCHES).forEach(function(id){
+    var done = !!S.searchesDone[id];
+    opts.push({ label:(done?'<span class="tick">✓</span> ':'')+SEARCHES[id].label, cls:done?"done":"", fn:(function(x){ return function(){ openSearch(x); }; })(id) });
+  });
+  Object.keys(INTERVIEWS).forEach(function(id){
+    var met = !!S.metSuspect[id];
+    opts.push({ label:(met?'<span class="tick">✓</span> ':'')+INTERVIEWS[id].label, cls:met?"done":"", fn:(function(x){ return function(){ openInterview(x); }; })(id) });
+  });
+  opts.push({ label:"🚔 Arrest a suspect", fn:showArrest });
+  if (S.sel >= opts.length) S.sel = 0;
+  render(hud() + '<h2>Where to, Detective?</h2><p class="body">Search, watch, question. The arrest is yours to make whenever you\'re ready.</p>', opts);
+}
+function openSearch(id){
+  var n = SEARCHES[id];
+  runPages(n.title, n.pages, n.clues, function(){ S.searchesDone[id]=true; showHub(); });
+}
+function openInterview(id){
+  S.ivId = id;
+  if (!S.metSuspect[id]){
+    var iv = INTERVIEWS[id];
+    runPages("Interview: "+iv.name, [ "<b>"+iv.name+"</b> — "+iv.role, iv.intro ], [], function(){ S.metSuspect[id]=true; showQuestions(); });
+  } else showQuestions();
+}
+function showQuestions(){
+  var id = S.ivId, iv = INTERVIEWS[id];
+  var opts = iv.questions.map(function(q, qi){
+    var asked = !!S.asked[id][qi];
+    return { label:(asked?'<span class="tick">✓</span> ':'')+q.q, cls:asked?"done":"", fn:function(){
+      runPages("Asking "+iv.name.split(",")[0], q.pages, q.clues||[], function(){ S.asked[id][qi]=true; showQuestions(); });
+    } };
+  });
+  opts.push({ label:"← Back to the board", fn:showHub });
+  if (S.sel >= opts.length) S.sel = 0;
+  render(hud() + '<h2>Questioning: '+iv.name+'</h2><p class="body">Pick your question.</p>', opts);
+}
+function showArrest(){
+  S.sel = 0;
   var warn = clueCount() < 5
-    ? '<p class="body" style="color:#e8b33c">You hold '+clueCount()+' of '+TOTAL_CLUES+' clues. You can accuse now — but a thin case may not stick.</p>'
-    : '<p class="body">You hold '+clueCount()+' of '+TOTAL_CLUES+' clues. Time to put a name on it.</p>';
+    ? '<p class="body" style="color:#e8b33c">You hold '+clueCount()+' of '+TOTAL_CLUES+' pieces of evidence. You can arrest now — but a thin case can fall apart in court.</p>'
+    : '<p class="body">You hold '+clueCount()+' of '+TOTAL_CLUES+' pieces of evidence. Put the cuffs on the killer.</p>';
   var opts = SUSPECTS.map(function(s){ return { label:s.label, fn:function(){ finish(s.id); } }; });
   opts.push({ label:"← Keep investigating", fn:showHub });
-  render( hud() + '<h2>Who took the prototype?</h2>' + warn, opts);
+  render(hud() + '<h2>Who killed Eli Dawson?</h2>' + warn, opts);
 }
 function finish(suspectId){
-  var n = clueCount(), correct = (suspectId==="marcus"), title, body, rank;
-  if (correct && n>=6){
-    title="CASE CLOSED"; rank="★ Rank: Sharp-Eye Detective";
-    body="You lay it out piece by piece — the key, the cut tread, the alarm log, the empty aisle, the slip about the foam, the cash offer. Marcus folds before you finish. The prototype is in a storage unit off Bragg Blvd, wrapped in that same blue foam.";
-  } else if (correct && n>=4){
-    title="CASE CLOSED — BARELY"; rank="★ Rank: Solid Detective";
-    body="The evidence you have is enough to sweat him, and Marcus breaks in the interview room: his code, his car, his $900 debt. Case closed — but one more clue would have made it airtight before a jury.";
+  var n = clueCount(), correct = (suspectId==="ray"), title, body, rank;
+  if (correct && n>=7){
+    title="KILLER BOOKED"; rank="★ Rank: Sharp-Eye Detective";
+    body="Text at 10:47. Truck at 10:52. A witness who saw it. A door locked with his key, a buyout Eli had already refused, and a payout waiting on a death. You set it all on the table, one page at a time — and Ray Delgado stops smiling. He confesses before the recorder's light goes red. Eli's shop stays in Eli's name.";
+  } else if (correct && n>=5){
+    title="ARRESTED — ON A SHAKY CASE"; rank="★ Rank: Solid Detective";
+    body="It's enough to charge Ray Delgado, and he knows it — the lies crack in the interview room. But the DA is sweating the gaps. One or two more pieces of evidence and this would have been airtight before it ever saw a jury.";
   } else if (correct){
-    title="RIGHT MAN — CASE DISMISSED"; rank="★ Rank: Lucky Guess";
-    body="Your gut said Marcus, and your gut was right. But gut isn't evidence. With almost nothing collected, his lawyer eats the case alive, and the prototype sells two states away. You knew. You couldn't prove it.";
+    title="RIGHT MAN — CASE COLLAPSED"; rank="★ Rank: Thin Case";
+    body="Your gut named Ray Delgado, and your gut was right. But gut isn't evidence. With almost nothing collected, his lawyer takes the case apart in a week, the charges drop, and Ray sells the shop and the story with it. You knew. You couldn't prove it.";
   } else {
-    title="CASE COLD"; rank="★ Rank: Cold Trail";
-    body="You put the cuffs on the wrong person. By the time the mistake surfaces, the prototype is gone, the real thief is paid, and Rosa's shop eats an $18,000 loss. The board goes quiet. This one will sit in the drawer.";
+    title="WRONG ARREST — KILLER WALKS"; rank="★ Rank: Cold Trail";
+    body="The cuffs go on the wrong person, and while the department untangles that, Ray Delgado quietly lists the shop, collects on the partnership, and disappears into a new name two states away. Eli Dawson doesn't get justice. Not this time.";
   }
-  S.mode="end"; S.sel=0;
-  render( hud() +
-    '<div class="bigemoji">'+(correct?"🕵️":"🧊")+'</div>' +
-    '<h2 class="center">'+title+'</h2>' +
-    '<p class="body">'+body+'</p>' +
-    '<p class="rank">'+rank+'</p>' +
-    '<p class="body center">Clues collected: '+n+' / '+TOTAL_CLUES+'</p>',
-    [ { label:"↻ Play it again", fn:function(){ reset(); showTitle(); } } ]
-  );
-  try{ localStorage.setItem("nightshift_last_rank", rank+" ("+n+"/"+TOTAL_CLUES+")"); }catch(e){}
+  S.sel = 0;
+  render(hud() + '<div class="bigemoji">'+(correct?"🕵️":"🧊")+'</div><h2 class="center">'+title+'</h2>' +
+    '<p class="body">'+body+'</p><p class="rank">'+rank+'</p>' +
+    '<p class="body center">Evidence collected: '+n+' / '+TOTAL_CLUES+'</p>',
+    [ { label:"↻ Work the case again", fn:function(){ reset(); showTitle(); } } ]);
+  try{ localStorage.setItem("nightshift_dawson_rank", rank+" ("+n+"/"+TOTAL_CLUES+")"); }catch(e){}
 }
-
-// ============ Input ============
-function activate(){
-  var o = currentOpts[S.sel];
-  if (o && o.fn) o.fn();
-}
+// ================= Input =================
+function activate(){ var o = currentOpts[S.sel]; if (o && o.fn) o.fn(); }
 function move(d){
   if (!currentOpts.length) return;
   S.sel = (S.sel + d + currentOpts.length) % currentOpts.length;
-  // re-render current screen cheaply by re-dispatching: we keep last render fn per mode
-  refreshSel();
-}
-function refreshSel(){
   Array.prototype.forEach.call(stage.querySelectorAll(".opt"), function(el, i){
     if (i===S.sel) el.classList.add("sel"); else el.classList.remove("sel");
   });

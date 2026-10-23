@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>Monster Merge — Boss Hunt · A Merge Game for Ray-Ban Display</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
+  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:18px 26px 12px; display:flex; flex-direction:column; }
+  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:14px 14px; } }
+  .kicker { color:#e8b33c; letter-spacing:3px; font-size:15px; text-transform:uppercase; text-align:center; }
+  h1 { font-size:46px; text-align:center; line-height:1.05; margin:10px 0 4px; color:#fff; }
+  h2 { font-size:30px; line-height:1.15; margin:6px 0 9px; color:#fff; }
+  .sub { text-align:center; color:#bdb49e; font-size:19px; font-style:italic; }
+  .body { font-size:22px; line-height:1.32; color:#efe9da; margin:8px 0; }
+  .body b { color:#e8b33c; }
+  .hud { display:flex; justify-content:space-between; font-size:16px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:7px; margin-bottom:9px; letter-spacing:1px; }
+  .hud .gold { color:#e8b33c; }
+  .hint { text-align:center; color:#77705f; font-size:15px; margin-top:8px; font-style:italic; }
+  .bigemoji { text-align:center; font-size:58px; margin:6px 0; }
+  .center { text-align:center; }
+  .rank { text-align:center; font-size:25px; color:#e8b33c; margin:8px 0; }
+  .opts { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+  .opt { border:2px solid #3d3d3d; border-radius:12px; padding:10px 13px; font-size:21px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.2; text-align:center; }
+  .opt.sel { border-color:#e8b33c; color:#fff; background:#1c1503; }
+  .focus { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .fside { text-align:center; color:#8a8271; font-size:19px; padding:5px 10px; cursor:pointer; line-height:1.2; }
+  .fcur { border:3px solid #e8b33c; background:#1c1503; color:#fff; border-radius:14px; padding:17px 15px; font-size:26px; text-align:center; cursor:pointer; line-height:1.25; }
+  .fpos { text-align:center; color:#77705f; font-size:15px; }
+  .boss { display:flex; align-items:center; gap:14px; border:2px solid #5a1f1f; background:#170808; border-radius:14px; padding:9px 14px; margin-bottom:9px; }
+  .bemoji { font-size:52px; line-height:1; }
+  .binfo { flex:1; }
+  .bname { font-size:23px; color:#ffb3a0; margin-bottom:5px; }
+  .bname b { color:#e8b33c; }
+  .hpbar { height:17px; background:#2a0f0f; border-radius:9px; overflow:hidden; border:1px solid #5a1f1f; }
+  .hpfill { height:100%; background:linear-gradient(90deg,#c0392b,#e74c3c); transition:width .25s; }
+  .hptext { font-size:16px; color:#cbb9a6; margin-top:4px; }
+  .hptext .dmg { color:#ff7a59; font-weight:bold; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:7px; width:100%; }
+  .tile { aspect-ratio:1/1; border-radius:12px; background:#14110d; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .tile .emo { font-size:41px; line-height:1.05; }
+  .tile .pow { font-size:16px; font-weight:bold; color:#fff; margin-top:1px; }
+  .t1{background:#2e2a26} .t2{background:#3f4a2a} .t3{background:#2a4a3a} .t4{background:#274b63}
+  .t5{background:#3d3b6e} .t6{background:#5b2a6e} .t7{background:#7a2d3b} .t8{background:#8a5a13}
+  .t9{background:#a03d12} .t10{background:#b8860b} .t11{background:#c21807} .t12{background:#e8b33c}
+  .t12 .pow { color:#1c1503; }
+  @keyframes pop { 0%{transform:scale(.6)} 60%{transform:scale(1.12)} 100%{transform:scale(1)} }
+  .tile.new { animation:pop .18s ease; }
+  .tile.merged { animation:pop .22s ease; }
+  .panel { border:2px solid #e8b33c; border-radius:14px; padding:16px 18px; background:#141005; margin-top:10px; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+// ================= MONSTER MERGE — Boss Hunt =================
+// 2048-style sliding merge, but the tiles are monsters. Merge two of a kind
+// to evolve a stronger monster. Every move, your horde attacks the boss:
+// damage = your strongest monster's power + every merge you made that move.
+// Drop the boss before the grid locks up. Bosses get bigger forever.
+// Controls: swipe (Neural Band / touch / arrows) to slide · pinch = menu.
+
+var MONSTERS = [
+  { p:2,    e:"🥚", n:"Egg" },
+  { p:4,    e:"🐛", n:"Grub" },
+  { p:8,    e:"🐸", n:"Battle Toad" },
+  { p:16,   e:"🦎", n:"Razor Lizard" },
+  { p:32,   e:"🐺", n:"Dire Wolf" },
+  { p:64,   e:"🦖", n:"Raptor" },
+  { p:128,  e:"🐉", n:"Dragon Whelp" },
+  { p:256,  e:"🐲", n:"Dragon" },
+  { p:512,  e:"👹", n:"Ogre King" },
+  { p:1024, e:"🧌", n:"Troll Titan" },
+  { p:2048, e:"😈", n:"Demon Lord" },
+  { p:4096, e:"💀", n:"Death God" }
+];
+var BOSSES = [
+  { e:"🧙", n:"Sorcerer" }, { e:"👺", n:"Goblin Warlord" }, { e:"🕷️", n:"Spider Queen" },
+  { e:"🧟", n:"Zombie Brute" }, { e:"🐙", n:"Kraken" }, { e:"🦇", n:"Vampire Lord" },
+  { e:"👑", n:"Fallen King" }, { e:"🔥", n:"Fire Titan" }, { e:"😈", n:"Archdemon" },
+  { e:"💀", n:"Lich Emperor" }
+];
+function bossMaxHP(n){ return Math.round(80 * Math.pow(1.9, n-1)); }
+function bossFor(n){ var b = BOSSES[(n-1) % BOSSES.length]; return { e:b.e, n: b.n + (n > BOSSES.length ? " Returns" : "") }; }
+function monsterFor(power){
+  var i = Math.round(Math.log2(power)) - 1;
+  if (i < 0) i = 0; if (i > MONSTERS.length-1) i = MONSTERS.length-1;
+  return { tier:i+1, e:MONSTERS[i].e, n:MONSTERS[i].n };
+}
+
+var S, stage = document.getElementById("stage");
+function reset(){
+  S = { board:[], score:0, best:0, bossNo:1, bossHP:bossMaxHP(1), defeated:0,
+        mode:"title", sel:0, lastDmg:0, newIdx:-1, mergedIdx:{}, keepGoing:false };
+  try{ S.best = parseInt(localStorage.getItem("monster_merge_best")||"0",10)||0; }catch(e){}
+  for (var i=0;i<16;i++) S.board.push(0);
+}
+reset();
+
+function emptyCells(){ var r=[]; for (var i=0;i<16;i++) if (!S.board[i]) r.push(i); return r; }
+function spawn(){
+  var e = emptyCells(); if (!e.length) return;
+  var idx = e[Math.floor(Math.random()*e.length)];
+  S.board[idx] = Math.random() < 0.9 ? 2 : 4;
+  S.newIdx = idx;
+}
+function strongest(){ var m=0; for (var i=0;i<16;i++) if (S.board[i]>m) m=S.board[i]; return m; }
+function canMove(){
+  if (emptyCells().length) return true;
+  for (var r=0;r<4;r++) for (var c=0;c<4;c++){
+    var v = S.board[r*4+c];
+    if (c<3 && S.board[r*4+c+1]===v) return true;
+    if (r<3 && S.board[(r+1)*4+c]===v) return true;
+  }
+  return false;
+}
+// Slide one line of 4 toward index 0, merging pairs once. Returns {line, gained, created:[values]}
+function slideLine(line){
+  var vals = line.filter(function(v){ return v!==0; }), out=[], created=[], gained=0, i=0;
+  while (i < vals.length){
+    if (i+1 < vals.length && vals[i]===vals[i+1]){ var nv = vals[i]*2; out.push(nv); created.push(nv); gained += nv; i += 2; }
+    else { out.push(vals[i]); i += 1; }
+  }
+  while (out.length < 4) out.push(0);
+  return { line:out, gained:gained, created:created };
+}
+function move(dir){
+  if (S.mode !== "play") return;
+  var old = S.board.slice(), createdAll = [], gained = 0;
+  function getLine(k){
+    var line=[], r, c;
+    for (var j=0;j<4;j++){
+      if (dir==="left"){ r=k; c=j; } else if (dir==="right"){ r=k; c=3-j; }
+      else if (dir==="up"){ r=j; c=k; } else { r=3-j; c=k; }
+      line.push(S.board[r*4+c]);
+    }
+    return line;
+  }
+  function setLine(k, line){
+    for (var j=0;j<4;j++){
+      var r, c;
+      if (dir==="left"){ r=k; c=j; } else if (dir==="right"){ r=k; c=3-j; }
+      else if (dir==="up"){ r=j; c=k; } else { r=3-j; c=k; }
+      S.board[r*4+c] = line[j];
+    }
+  }
+  for (var k=0;k<4;k++){
+    var res = slideLine(getLine(k));
+    setLine(k, res.line);
+    gained += res.gained;
+    createdAll = createdAll.concat(res.created);
+  }
+  var changed = false;
+  for (var i=0;i<16;i++) if (S.board[i]!==old[i]) changed = true;
+  if (!changed){ S.lastDmg = 0; paint(); return; }
+  S.mergedIdx = {};
+  // mark merged tiles (first tile matching each created value, not previously marked)
+  createdAll.forEach(function(v){
+    for (var i=0;i<16;i++){ if (S.board[i]===v && !S.mergedIdx[i]){ S.mergedIdx[i]=true; break; } }
+  });
+  S.score += gained;
+  spawn();
+  // --- the horde attacks ---
+  var dmg = strongest() + createdAll.reduce(function(a,b){ return a+b; }, 0);
+  S.lastDmg = dmg;
+  S.bossHP -= dmg;
+  if (S.bossHP <= 0){
+    S.defeated++;
+    S.score += 100 * S.bossNo;
+    if (S.score > S.best){ S.best = S.score; try{ localStorage.setItem("monster_merge_best", String(S.best)); }catch(e){} }
+    S.mode = "down"; S.sel = 0;
+    paint(); return;
+  }
+  if (!canMove()){
+    if (S.score > S.best){ S.best = S.score; try{ localStorage.setItem("monster_merge_best", String(S.best)); }catch(e){} }
+    S.mode = "over"; S.sel = 0;
+  }
+  paint();
+}
+function nextBoss(){
+  S.bossNo++;
+  S.bossHP = bossMaxHP(S.bossNo);
+  S.lastDmg = 0;
+  // victory feast: the horde eats the eggs — clear tier-1 tiles to open the board
+  for (var i=0;i<16;i++) if (S.board[i]===2) S.board[i]=0;
+  if (emptyCells().length === 16){ spawn(); spawn(); }
+  S.mode = "play";
+  paint();
+}
+function newRun(){
+  var best = S.best;
+  reset(); S.best = best;
+  spawn(); spawn();
+  S.mode = "play";
+  paint();
+}
+
+// ================= Rendering =================
+function hud(){
+  return '<div class="hud"><span>MONSTER MERGE</span><span>SCORE <span class="gold">'+S.score+'</span> · BEST <span class="gold">'+Math.max(S.best,S.score)+'</span></span></div>';
+}
+function gridHTML(){
+  var h = '<div class="grid">';
+  for (var i=0;i<16;i++){
+    var v = S.board[i];
+    if (!v){ h += '<div class="tile"></div>'; continue; }
+    var m = monsterFor(v);
+    var cls = "tile t"+m.tier + (i===S.newIdx ? " new" : "") + (S.mergedIdx[i] ? " merged" : "");
+    h += '<div class="'+cls+'"><div class="emo">'+m.e+'</div><div class="pow">'+v+'</div></div>';
+  }
+  return h + '</div>';
+}
+function bossHTML(){
+  var b = bossFor(S.bossNo), pct = Math.max(0, Math.round(100*S.bossHP/bossMaxHP(S.bossNo)));
+  var sm = monsterFor(Math.max(2, strongest()));
+  return '<div class="boss"><div class="bemoji">'+b.e+'</div><div class="binfo">' +
+    '<div class="bname">BOSS '+S.bossNo+' — '+b.n+'</div>' +
+    '<div class="hpbar"><div class="hpfill" style="width:'+pct+'%"></div></div>' +
+    '<div class="hptext">HP '+Math.max(0,S.bossHP)+' / '+bossMaxHP(S.bossNo) +
+    (S.lastDmg ? ' · <span class="dmg">-'+S.lastDmg+' last hit</span>' : '') +
+    '<br>Strongest: '+sm.e+' '+sm.n+' · '+strongest()+'</div></div></div>';
+}
+function focusMenu(opts){
+  var n = opts.length, cur = opts[S.sel];
+  var prev = opts[(S.sel-1+n)%n], next = opts[(S.sel+1)%n];
+  return '<div class="focus"><div class="fside" id="fprev">▲ '+prev.label+'</div>' +
+    '<div class="fcur" id="fcur">'+cur.label+'</div>' +
+    '<div class="fside" id="fnext">▼ '+next.label+'</div>' +
+    '<div class="fpos">'+(S.sel+1)+' of '+n+' — swipe to browse, pinch the gold box to choose</div></div>';
+}
+function singleBtn(label){
+  return '<div class="opts"><div class="opt sel" id="singlebtn">'+label+'</div></div>';
+}
+var menuOpts = [];
+function paint(){
+  var html = "";
+  if (S.mode === "title"){
+    menuOpts = [ { label:"▶ Start the hunt", fn:function(){ newRun(); } } ];
+    html = '<div class="kicker">A Merge Game</div><h1>MONSTER<br>MERGE</h1><div class="bigemoji">🐲</div>' +
+      '<div class="sub">Merge the horde. Evolve the monsters.<br>Kill the boss.</div>' +
+      '<p class="body center" style="margin-top:12px">Swipe to slide the grid. Two of a kind merge into something <b>bigger</b>. Every move, your strongest monster hits the boss. Drop him before the grid locks up.</p>' +
+      singleBtn("▶ Start the hunt");
+  } else if (S.mode === "play"){
+    menuOpts = [];
+    html = hud() + bossHTML() + gridHTML() + '<div class="hint">Swipe to slide & merge · Pinch for menu</div>';
+  } else if (S.mode === "menu"){
+    menuOpts = [ { label:"▶ Back to battle", fn:function(){ S.mode="play"; paint(); } },
+                 { label:"↻ New run", fn:function(){ newRun(); } } ];
+    html = hud() + bossHTML() + '<div class="panel"><h2 class="center">Paused</h2><p class="body center">The horde holds its breath.</p></div>' + focusMenu(menuOpts);
+  } else if (S.mode === "down"){
+    var b = bossFor(S.bossNo);
+    menuOpts = [ { label:"▶ Face Boss "+(S.bossNo+1), fn:function(){ nextBoss(); } } ];
+    html = hud() + '<div class="bigemoji">'+b.e+'</div><h2 class="center">BOSS DOWN!</h2>' +
+      '<p class="body center">'+b.n+' is finished — <b>+' + (100*S.bossNo) + ' bonus</b>. The horde feasts on the eggs, clearing space on your board.</p>' +
+      '<p class="body center">Bosses defeated: <b>'+S.defeated+'</b> · Score: <b>'+S.score+'</b></p>' +
+      singleBtn("▶ Face Boss "+(S.bossNo+1));
+  } else if (S.mode === "over"){
+    menuOpts = [ { label:"↻ New run", fn:function(){ newRun(); } } ];
+    html = hud() + '<div class="bigemoji">💀</div><h2 class="center">THE HORDE FALLS</h2>' +
+      '<p class="body center">The grid locked up with Boss '+S.bossNo+' still standing.</p>' +
+      '<p class="body center">Bosses defeated: <b>'+S.defeated+'</b><br>Final score: <b>'+S.score+'</b> · Best: <b>'+Math.max(S.best,S.score)+'</b></p>' +
+      singleBtn("↻ New run");
+  }
+  stage.innerHTML = html;
+  var fc = document.getElementById("fcur"), fp = document.getElementById("fprev"), fn = document.getElementById("fnext"), sb = document.getElementById("singlebtn");
+  if (fc) fc.addEventListener("click", function(){ activateMenu(); });
+  if (fp) fp.addEventListener("click", function(){ moveSel(-1); });
+  if (fn) fn.addEventListener("click", function(){ moveSel(1); });
+  if (sb) sb.addEventListener("click", function(){ activateMenu(); });
+  fitToLens();
+}
+function fitToLens(){
+  try{ requestAnimationFrame(function(){
+    stage.style.transform = "";
+    var need = stage.scrollHeight, avail = window.innerHeight || 600;
+    if (need > avail){ var sc = Math.max(0.45,(avail/need)*0.99); stage.style.transformOrigin="top center"; stage.style.transform="scale("+sc+")"; }
+  }); }catch(e){}
+}
+function moveSel(d){
+  if (!menuOpts.length) return;
+  S.sel = (S.sel + d + menuOpts.length) % menuOpts.length;
+  paint();
+}
+function activateMenu(){ var o = menuOpts[S.sel] || menuOpts[0]; if (o && o.fn) o.fn(); }
+
+// ================= Input =================
+document.addEventListener("keydown", function(e){
+  var arrows = { ArrowUp:"up", ArrowDown:"down", ArrowLeft:"left", ArrowRight:"right" };
+  if (S.mode === "play"){
+    if (arrows[e.key]){ move(arrows[e.key]); e.preventDefault(); }
+    else if (e.key==="Enter" || e.key===" "){ S.mode="menu"; S.sel=0; paint(); e.preventDefault(); }
+  } else {
+    if (e.key==="ArrowDown" || e.key==="ArrowRight"){ moveSel(1); e.preventDefault(); }
+    else if (e.key==="ArrowUp" || e.key==="ArrowLeft"){ moveSel(-1); e.preventDefault(); }
+    else if (e.key==="Enter" || e.key===" "){ activateMenu(); e.preventDefault(); }
+  }
+});
+var tx=0, ty=0;
+document.addEventListener("touchstart", function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+document.addEventListener("touchend", function(e){
+  var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<24 && Math.abs(dy)<24) return; // a tap, not a swipe (clicks handle taps)
+  if (S.mode === "play"){
+    if (Math.abs(dx) > Math.abs(dy)) move(dx>0 ? "right" : "left");
+    else move(dy>0 ? "down" : "up");
+  } else {
+    if (Math.abs(dy) >= Math.abs(dx)) moveSel(dy<0 ? 1 : -1);
+  }
+}, {passive:true});
+
+paint();
+</script>
+</body>
+</html>

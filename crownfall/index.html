@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>Crownfall — Rule the Kingdom · A Game for Ray-Ban Display</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
+  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:18px 26px 12px; display:flex; flex-direction:column; }
+  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:14px 14px; } }
+  .kicker { color:#e8b33c; letter-spacing:3px; font-size:15px; text-transform:uppercase; text-align:center; }
+  h1 { font-size:52px; text-align:center; line-height:1.05; margin:10px 0 4px; color:#fff; }
+  h2 { font-size:29px; line-height:1.15; margin:6px 0 8px; color:#fff; }
+  .sub { text-align:center; color:#bdb49e; font-size:19px; font-style:italic; }
+  .body { font-size:22px; line-height:1.32; color:#efe9da; margin:8px 0; }
+  .body b { color:#e8b33c; }
+  .small { font-size:18px; color:#bdb49e; }
+  .hud { display:flex; justify-content:space-between; font-size:16px; color:#9d9582; border-bottom:1px solid #333; padding-bottom:6px; margin-bottom:8px; letter-spacing:1px; }
+  .hud .gold { color:#e8b33c; }
+  .hint { text-align:center; color:#77705f; font-size:15px; margin-top:8px; font-style:italic; }
+  .bigemoji { text-align:center; font-size:58px; margin:4px 0; }
+  .center { text-align:center; }
+  .opts { margin-top:auto; display:flex; flex-direction:column; gap:8px; }
+  .opt { border:2px solid #3d3d3d; border-radius:12px; padding:10px 13px; font-size:21px; color:#ddd6c4; background:#0a0a0a; cursor:pointer; line-height:1.2; text-align:center; }
+  .opt.sel { border-color:#e8b33c; color:#fff; background:#1c1503; }
+  .focus { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .fside { text-align:center; color:#8a8271; font-size:18px; padding:4px 10px; cursor:pointer; line-height:1.2; }
+  .fcur { border:3px solid #e8b33c; background:#1c1503; color:#fff; border-radius:14px; padding:15px 14px; font-size:25px; text-align:center; cursor:pointer; line-height:1.25; }
+  .fpos { text-align:center; color:#77705f; font-size:14px; }
+  .meters { display:grid; grid-template-columns:1fr 1fr; gap:6px 16px; margin-bottom:9px; }
+  .meter { display:flex; align-items:center; gap:7px; font-size:17px; }
+  .meter .bar { flex:1; height:11px; background:#241f16; border-radius:6px; overflow:hidden; border:1px solid #3d3626; }
+  .meter .fill { height:100%; background:#e8b33c; }
+  .meter .fill.low { background:#c0392b; }
+  .meter .fill.high { background:#ffdf7e; }
+  .meter .val { width:30px; text-align:right; color:#e8dcc0; }
+  .card { border:2px solid #6b5a2a; border-radius:14px; background:#0d0b06; padding:13px 16px 11px; }
+  .who { display:flex; align-items:center; gap:12px; margin-bottom:6px; }
+  .who .emo { font-size:46px; line-height:1; }
+  .who .nm { font-size:22px; color:#fff; }
+  .who .rl { font-size:16px; color:#e8b33c; letter-spacing:1px; text-transform:uppercase; }
+  .ask { font-size:22px; line-height:1.33; color:#efe9da; }
+  .deltas { text-align:center; font-size:20px; margin:7px 0; }
+  .deltas .up { color:#8fe388; } .deltas .dn { color:#ff8a75; }
+  .note { text-align:center; color:#e8b33c; font-size:18px; font-style:italic; margin:5px 0; }
+  .panel { border:2px solid #e8b33c; border-radius:14px; padding:15px 18px; background:#141005; margin-top:9px; }
+  .warn { color:#ff8a75; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+// ================= CROWNFALL =================
+// You are King Realvon. Everything in the realm flows through the throne.
+// Petitioners are GENERATED — random names, roles, places and requests —
+// so no two reigns (and rarely two petitioners) are ever the same.
+// Rule by choosing. Four meters — Gold, Food, Army, People — if any one
+// empties or overflows, the reign ends. Survive as many years as you can.
+
+function rnd(n){ return Math.floor(Math.random()*n); }
+function pick(a){ return a[rnd(a.length)]; }
+function ri(lo,hi){ return lo + rnd(hi-lo+1); }
+
+var FIRST = ["Aldous","Berta","Cassian","Doran","Elfa","Fenwick","Gisela","Hobart","Isolde","Joren","Katrin","Ludo","Mirabel","Nils","Odessa","Percival","Quill","Rosalind","Sten","Tomasin","Ursula","Vance","Willa","Yorick","Zelda","Ambrose","Blythe","Corin","Delia","Emrys","Flora","Gareth","Hedwig","Ivo","Jessamine","Kaspar","Lavinia","Mordecai","Nell","Osric"];
+var EPITHET = ["the Scarred","the Loud","One-Eye","the Younger","the Unbothered","the Pious","Half-Beard","the Swift","the Broke","the Lucky","the Grim","the Singing","the Tall","the Cautious","Iron-Tooth","the Patient","the Restless","the Widowed","Two-Cloaks","the Honest"];
+var PLACES = ["Millbrook","the North Farms","Eastgate","the Salt Flats","Ravenhill","the Low Villages","Port Sorrow","the Pinewood","Kingsfield","the Marshes","Barrow Town","the Copper Hills"];
+var RIVALS = ["the Ember Court","Vessland","the Iron Duchy","Korvath","the Pale Kingdom","Ostremar","the Thorn Alliance"];
+var CROPS = ["wheat","rye","apples","turnips","grapes","barley"];
+var BEASTS = ["wolves","a boar the size of a cart","river serpents","wild dogs","a bear that walks like a man"];
+
+var ROLES = [
+ { e:"⚔️", role:"General", t:[
+   { x:"{name} wants fresh soldiers for the border at {place}. \"Give me spears, Majesty, and I will give you quiet nights.\"",
+     ch:[ { l:"Raise the levy", fx:{G:[-11,-6],A:[8,14],P:[-8,-4]}, o:"The levy marches out by week's end. The border sleeps quiet — the General sees to it in your name." },
+          { l:"Hold the line as-is", fx:{A:[-9,-5],G:[3,7]}, o:"The General salutes and makes do. The treasury breathes; the border, less so." } ] },
+   { x:"{name} reports deserters hiding in {place} and asks leave to make an example of them.",
+     ch:[ { l:"Make the example", fx:{A:[6,11],P:[-10,-6]}, o:"Two deserters hang at the crossroads. No one runs after that. No one smiles, either." },
+          { l:"Pardon them all", fx:{P:[6,11],A:[-8,-4]}, o:"The pardon is read in every camp. The men cheer the King's mercy — and a few slip away anyway." } ] } ] },
+ { e:"💰", role:"Tax Collector", t:[
+   { x:"{name} has found merchants in {place} hiding coin from the Crown and asks how hard to squeeze.",
+     ch:[ { l:"Squeeze them dry", fx:{G:[10,16],P:[-9,-5]}, o:"Chests of hidden coin roll into the treasury. The merchants curse your name — quietly, and in taxed ink." },
+          { l:"A fair warning only", fx:{G:[3,6],P:[3,6]}, o:"The merchants pay a little and praise your fairness a lot. The next tithe arrives early." } ] },
+   { x:"{name} proposes a new tax on {crop} — \"the barns are full, Majesty, and the Crown's share is overdue.\"",
+     ch:[ { l:"Tax the {crop}", fx:{G:[8,13],F:[-6,-3],P:[-5,-2]}, o:"The tax carts roll. The barns still stand full enough, and the vault stands fuller." },
+          { l:"Leave the barns alone", fx:{P:[5,9],G:[-4,-1]}, o:"Word spreads that the King protects the harvest. Songs follow. Coin does not." } ] } ] },
+ { e:"🌾", role:"Farmer", t:[
+   { x:"{name} kneels with empty hands: the {crop} failed in {place}. \"We need seed grain from the royal stores, Majesty, or spring finds us gone.\"",
+     ch:[ { l:"Open the royal stores", fx:{F:[-10,-6],P:[8,13]}, o:"Seed grain flows to {place} under your seal. Come harvest, they will speak of the King who fed the spring." },
+          { l:"The stores stay shut", fx:{P:[-10,-6],F:[2,5]}, o:"The stores stay shut and full. {place} goes quiet in a way that worries the guards." } ] },
+   { x:"{name} brings the first cart of {crop} as tribute — and asks the Crown to fix the broken mill at {place}.",
+     ch:[ { l:"Fix the mill", fx:{G:[-8,-4],F:[7,12]}, o:"Masons ride out under your banner. By autumn the millstones turn and the flour runs white." },
+          { l:"The mill can wait", fx:{G:[2,5],F:[-5,-2]}, o:"The tribute is banked. The mill stands broken, and every loaf in {place} costs a little more." } ] } ] },
+ { e:"🧳", role:"Traveling Merchant", t:[
+   { x:"{name} deals in silks and secrets from {rival}. For a chest of gold, both are yours.",
+     ch:[ { l:"Buy silk and secrets", fx:{G:[-12,-7],A:[5,9]}, o:"The silk dresses your court; the secrets arm your generals. {rival} will wonder how you knew." },
+          { l:"Send him away", fx:{P:[2,5]}, o:"The merchant bows out backwards, smiling. His secrets travel to some other throne." } ] },
+   { x:"{name} offers to open a trade road through {place} — if the Crown pays for guards along it.",
+     ch:[ { l:"Fund the road guards", fx:{G:[-9,-5]}, o:"Guarded carts roll within the month. Tolls, taxes and tall tales flow back to the capital." },
+          { l:"Roads guard themselves", fx:{F:[-6,-3],P:[-4,-1]}, o:"Unguarded, the road empties. {place} trades with no one this year." } ] } ] },
+ { e:"🙏", role:"Bishop", t:[
+   { x:"{name} asks the Crown to fund a great cathedral in {place}, \"so heaven itself will know your name, Majesty.\"",
+     ch:[ { l:"Fund the cathedral", fx:{G:[-13,-8],P:[7,12]}, o:"Stone rises on stone under your name. The bells, when they ring, will ring for the King." },
+          { l:"Heaven can wait", fx:{G:[3,6],P:[-7,-3]}, o:"The Bishop departs coldly. Sunday sermons grow pointed in {place}." } ] },
+   { x:"{name} denounces the court's feasting while villages go thin, and asks you to proclaim a fast.",
+     ch:[ { l:"Proclaim the fast", fx:{F:[6,10],P:[4,8],G:[-3,0]}, o:"The court fasts — loudly, publicly, and with great credit to the King's piety." },
+          { l:"The court feasts on", fx:{P:[-9,-5],F:[-4,-1]}, o:"The feast continues. So does the Bishop's sermon, now with your name in it." } ] } ] },
+ { e:"🧪", role:"Alchemist", t:[
+   { x:"{name} swears the grey powder is nearly gold — \"one more furnace, Majesty, one more small fortune, and I am there.\"",
+     ch:[ { l:"Fund the furnace", fx:{G:[-10,-5]}, o:"The furnace roars for a month, then coughs grey smoke. {name} brings you a very sincere grey powder." },
+          { l:"No more furnaces", fx:{G:[2,4]}, o:"The alchemist bows and leaves. A week later, an explosion in {place} is officially 'weather'." } ] },
+   { x:"{name} has brewed a tonic that kept three plague houses standing — and asks to test it on the army.",
+     ch:[ { l:"Test it on the army", fx:{A:[6,11],G:[-6,-3]}, o:"The tonic works — mostly. The army stands taller, and only a few men glow faintly at night." },
+          { l:"Too risky", fx:{A:[-3,0]}, o:"The tonic goes back on the shelf. {name} mutters about kings and courage all the way out." } ] } ] },
+ { e:"🤡", role:"Jester", t:[
+   { x:"{name} performed a song about your tax men in the square. The crowd laughed for an hour. The tax men did not.",
+     ch:[ { l:"Laugh, and gift him gold", fx:{G:[-5,-2],P:[7,11]}, o:"The King laughs loudest of all. By nightfall the whole kingdom loves you for it — even the tax men pretend to." },
+          { l:"A night in the stocks", fx:{P:[-8,-4],G:[2,4]}, o:"The stocks teach the jester timing. The square goes quiet, and stays that way longer than you meant." } ] },
+   { x:"{name} whispers a joke he will not repeat — about the Queen Mother's new 'friend' at court.",
+     ch:[ { l:"Hear the joke", fx:{P:[3,6]}, o:"The joke is filthy and perfect. You now know three things about your court you cannot unknow." },
+          { l:"Jesters should sing, not spy", fx:{G:[1,3]}, o:"The jester bows, jingling, and keeps his secrets — this time." } ] } ] },
+ { e:"🕵️", role:"Spymaster", t:[
+   { x:"{name} slides a list across the table: three nobles, one plot, your name at the top of their little document.",
+     ch:[ { l:"Arrest all three tonight", fx:{A:[-4,-1],P:[-6,-3],G:[7,12]}, o:"By dawn their estates belong to the Crown and their plot belongs to the fire. The court is very polite today." },
+          { l:"Watch them. Let it ripen", fx:{G:[-4,-1]}, o:"The spies watch the plotters watch each other. Nothing happens — which is exactly the sound of it working." } ] },
+   { x:"{name} can place an ear inside the court of {rival} — for a price paid in unmarked gold.",
+     ch:[ { l:"Pay the price", fx:{G:[-9,-5],A:[4,8]}, o:"Gold vanishes south. Weeks later, {rival}'s war plans arrive written in your spymaster's neat hand." },
+          { l:"No spies. We are above it", fx:{P:[2,5],A:[-5,-2]}, o:"The court applauds the King's honor. {rival} applauds it too, for their own reasons." } ] } ] },
+ { e:"⚒️", role:"Blacksmith", t:[
+   { x:"{name} can forge a thousand spearheads by winter — if the Crown supplies iron and coal.",
+     ch:[ { l:"Supply the forge", fx:{G:[-9,-5],A:[9,14]}, o:"The forge-fires of {place} burn day and night. By winter, your spears outnumber the snows." },
+          { l:"Spears can wait for spring", fx:{G:[3,6],A:[-6,-3]}, o:"The forge cools. The blacksmith shrugs — smiths are patient; enemies, less so." } ] },
+   { x:"{name} has made you a sword that sings when swung, and asks only to be named Royal Smith.",
+     ch:[ { l:"Name him Royal Smith", fx:{G:[-4,-2],P:[4,7]}, o:"The sword does sing. So, at court, does everyone else — the King has a singing sword and a smith who'd die for him." },
+          { l:"A sword is a sword", fx:{G:[1,3]}, o:"The sword is sold to a lord in {place}. It sings at his table now, and the story is told everywhere." } ] } ] },
+ { e:"🔮", role:"Witch", t:[
+   { x:"{name} was caught reading the river stones in {place}. The village wants her burned. She asks, smiling, to read YOUR stones instead.",
+     ch:[ { l:"Hear the reading", fx:{P:[-4,-1]}, o:"Her stones say: a crown, a fire, a door left open. She is gone by morning — the cell was locked, the guards are sure of it." },
+          { l:"Let the village decide", fx:{P:[3,6]}, o:"The pyre is lit at dusk. That night, every candle in {place} burns blue, and no one sleeps well." } ] },
+   { x:"{name} offers a charm against poison for the royal cup — payment: one secret, freely given.",
+     ch:[ { l:"Give her a secret", fx:{G:[0,2]}, o:"You tell her something small and true. The charm works — or the poisoners hear of it and retire. Either way, you drink easy." },
+          { l:"The King fears no cup", fx:{P:[2,4]}, o:"She shrugs and melts into the crowd. Your cupbearer starts tasting twice, and sweating once." } ] } ] },
+ { e:"🛡️", role:"Knight", t:[
+   { x:"{name} returns from {place} with a captured banner of {rival} — and requests a tournament to honor the deed.",
+     ch:[ { l:"Hold the tournament", fx:{G:[-10,-6],P:[8,12],A:[3,6]}, o:"Three days of trumpets and broken lances. The realm leaves hoarse, happy, and very sure of its King." },
+          { l:"A banner needs no feast", fx:{G:[2,5],P:[-5,-2]}, o:"The banner hangs in the hall, uncelebrated. {name} drinks alone, and the tale shrinks with every telling." } ] },
+   { x:"{name} begs leave to duel the champion of {rival} at the border stone, for the honor of the Crown.",
+     ch:[ { l:"Grant the duel", fx:{A:[5,9],P:[3,6]}, o:"At dawn, at the border stone, your knight's sword writes the argument. {rival} sends no champion next year." },
+          { l:"No duels. Honor keeps", fx:{A:[-5,-2]}, o:"The leave is denied. The border stone keeps its peace — and gains a story about a king who blinked." } ] } ] },
+ { e:"🐑", role:"Shepherd", t:[
+   { x:"{name} has lost nine sheep to {beast} in {place} and begs the Crown for hounds and spears.",
+     ch:[ { l:"Send hounds and spears", fx:{G:[-6,-3],F:[6,10],P:[4,7]}, o:"The hunt rides out under your banner. The flock — and the village — sleep behind locked doors no longer." },
+          { l:"Sheep are the gods' affair", fx:{F:[-8,-4],P:[-6,-3]}, o:"The losses mount. In {place}, they stop saying 'the King's sheep' and start saying 'the wolves' king'." } ] } ] },
+ { e:"🎭", role:"Minstrel", t:[
+   { x:"{name} has written a ballad of your reign — twelve verses, all flattering — and asks a pension to write twelve more.",
+     ch:[ { l:"Pay the pension", fx:{G:[-6,-3],P:[6,10]}, o:"The ballads spread from tavern to tavern like good weather. Peasants who never saw you would fight for you now." },
+          { l:"Kings need no songs", fx:{G:[2,4],P:[-4,-1]}, o:"The minstrel takes his verses to {rival}, where the flattery is re-aimed within the week." } ] } ] },
+ { e:"🪓", role:"Executioner", t:[
+   { x:"{name} keeps the axe sharp and the dungeons quiet, and asks — formally, politely — for a raise and a new hood.",
+     ch:[ { l:"Grant the raise", fx:{G:[-5,-2],A:[3,6]}, o:"A new hood, a heavier purse, and the dungeons stay quiet. Some loyalties are simple, and worth every coin." },
+          { l:"The axe is pay enough", fx:{G:[1,3],A:[-4,-1]}, o:"He nods once, slowly. The axe stays sharp. Something in his nod stays with you longer than you'd like." } ] } ] },
+ { e:"🍺", role:"Innkeeper", t:[
+   { x:"{name} keeps the inn at the crossroads in {place}, where every traveler in the realm eventually talks — and offers the talk to you, for a license fee waived.",
+     ch:[ { l:"Waive the fee, take the talk", fx:{G:[-5,-2],A:[4,7]}, o:"Drunk soldiers, loose merchants, one very talkative assassin — the crossroads reports to you now." },
+          { l:"The Crown buys no gossip", fx:{P:[2,4]}, o:"The innkeeper shrugs and sells the talk where it's wanted. Some of it, you later learn, was about you." } ] } ] },
+ { e:"👑", role:"Queen Mother", t:[
+   { x:"Your mother, the Queen Mother, sweeps in without knocking: \"That portrait in the hall makes you look tired, and your court knows it.\"",
+     ch:[ { l:"Commission a new portrait", fx:{G:[-7,-4],P:[5,8]}, o:"The new portrait shows a king mid-laugh, dangerous and golden. The court studies it like weather. Your mother approves." },
+          { l:"Mother, I AM tired", fx:{P:[3,6]}, o:"She snorts, fixes your collar like you're nine, and tells the court the King is 'resting his eyes'. The court loves her more than ever." } ] },
+   { x:"The Queen Mother announces she has chosen you a 'suitable companion' from a good family in {place}, and awaits your gratitude.",
+     ch:[ { l:"Meet the companion", fx:{P:[4,8],G:[-4,-1]}, o:"The companion is clever, funny, and beats you at chess. The court gossips happily for a month. Your mother takes full credit." },
+          { l:"The King chooses alone", fx:{P:[-4,-1]}, o:"You decline, as is your right. Your mother accepts this with the smile of a woman already writing letters." } ] } ] }
+];
+
+var GENERIC = [
+ { e:"🌟", role:"The Court", x:"A comet hangs over {place} for three nights. The priests call it an omen. The people are watching to see what the King calls it.",
+   ch:[ { l:"A sign of my reign", fx:{P:[6,10],G:[-3,0]}, o:"Proclaimed an omen of the Crown, the comet becomes your comet. Children born that week are named for you." },
+        { l:"A rock. Say nothing", fx:{P:[-3,0]}, o:"You say nothing, and the silence fills with everyone else's meaning. The priests' version wins the taverns." } ] },
+ { e:"🌧️", role:"The Realm", x:"Rains flood the low fields of {place}. Granaries stand wet, roads stand worse, and the court looks to the throne.",
+   ch:[ { l:"Send aid and engineers", fx:{G:[-10,-6],F:[5,9],P:[6,9]}, o:"Royal engineers drain the low fields under your banner. {place} dries out singing the King's name." },
+        { l:"The realm endures", fx:{F:[-9,-5],P:[-7,-4]}, o:"The water recedes on its own schedule. So, in {place}, does something else." } ] },
+ { e:"🎪", role:"The Court", x:"A troupe of acrobats, a fire-eater and one very confident bear request leave to perform at the harvest fair in {place}.",
+   ch:[ { l:"Grant it, with royal coin", fx:{G:[-5,-2],P:[7,11]}, o:"The bear dances, the fire-eater survives, and the fair is talked about for a year — as the King's fair." },
+        { l:"No bears at my fair", fx:{P:[-4,-1],G:[1,3]}, o:"The troupe performs in {rival} instead. The bear, reportedly, is magnificent." } ] },
+ { e:"📜", role:"The Court", x:"A wandering scholar arrives with a map claiming a gold seam under the hills of {place} — and an asking price for it.",
+   ch:[ { l:"Buy the map", fx:{G:[-8,-4]}, o:"The seam is real — real pyrite, mostly. The fool's gold glitters in the treasury anyway, and only you and the scholar know." },
+        { l:"Maps are cheap. Pass", fx:{G:[1,3]}, o:"The scholar sells the map elsewhere. Whatever was under those hills stays under them, unbothered and unmined." } ] },
+ { e:"🐺", role:"The Realm", x:"{beast} have grown bold near {place}, taking toll of flock and traveler alike.",
+   ch:[ { l:"Proclaim a royal hunt", fx:{G:[-6,-3],F:[5,8],A:[2,5]}, o:"You ride at the head of the hunt yourself. The ballad writes itself, and the roads open again." },
+        { l:"Post a bounty instead", fx:{G:[-4,-2],F:[3,6]}, o:"Every farmhand with a spear turns hunter for a month. The pelts come in; the boldness goes out." } ] }
+];
+
+var STATE_CARDS = [
+ { when:function(S){ return S.m.F<=25; }, e:"🥣", role:"The Hungry", x:"A line of the hungry stands at the palace gate from {place}, bowls in hand, saying nothing. The silence is the loudest petition of your reign.",
+   ch:[ { l:"Feed them from the stores", fx:{F:[-8,-4],P:[9,13]}, o:"The bowls are filled under your seal. They leave blessing the King's name with full mouths." },
+        { l:"Close the gates", fx:{P:[-12,-8],A:[2,4]}, o:"The gates close. The line disperses slowly, memorizing the way back." } ] },
+ { when:function(S){ return S.m.G>=78; }, e:"🗡️", role:"The Vaults", x:"Thieves were caught inside the royal vault itself — guardsmen, two of them, with sacks half full. The vault's wealth has become a rumor that bites.",
+   ch:[ { l:"Hang them over the gate", fx:{G:[3,6],P:[-8,-4],A:[3,5]}, o:"The vault is sealed, the example is made, and the treasury's guards stand straighter forever after." },
+        { l:"Quiet exile, no spectacle", fx:{G:[-4,-1],P:[2,4]}, o:"They vanish in the night. The court whispers anyway — but whispers are cheaper than riots." } ] },
+ { when:function(S){ return S.m.P<=25; }, e:"🔥", role:"The Square", x:"A crowd fills the square in {place} with torches and grievances — taxes, bread, and a puppet of the King that has seen better days.",
+   ch:[ { l:"Address them myself", fx:{P:[8,13],G:[-5,-2]}, o:"You speak from the balcony until the torches lower. Not everyone is won — but everyone is heard, and that was the fire's fuel." },
+        { l:"Send the guard", fx:{A:[-5,-2],P:[-11,-7]}, o:"The square is cleared by nightfall. The grievances go home with everyone, unpacked and saved." } ] },
+ { when:function(S){ return S.m.A<=25; }, e:"🏳️", role:"The Border", x:"Riders from {rival} crossed at {place}, burned a watchtower, and left a flag planted in the ash — a message written in fire.",
+   ch:[ { l:"Rebuild, double the watch", fx:{G:[-9,-5],A:[7,11]}, o:"A taller tower rises from the ash, manned double. The next message {rival} sends will be a polite one." },
+        { l:"Answer with silence", fx:{P:[-6,-3],A:[-4,-1]}, o:"The flag stands in the ash all season. Travelers describe it, in detail, in every inn in the realm." } ] }
+];
+
+var ARCS = {
+ war: { name:"War with {rival}", steps:[
+   { e:"🐎", role:"War Council", x:"It is war. {rival} has crossed the border in force, and your generals await the King's word on how this war will be fought.",
+     ch:[ { l:"Total war — everything in", fx:{G:[-13,-8],A:[9,13]}, o:"The realm becomes a camp. Every road carries spears; every hearth gives a son or a coin." },
+          { l:"A short, sharp campaign", fx:{G:[-7,-4],A:[4,7]}, o:"The army marches lean and fast. The border will decide the rest." } ] },
+   { e:"🏕️", role:"War Council", x:"The war grinds on. Your army holds the river line at {place}, but supplies run thin and the men run thinner.",
+     ch:[ { l:"Strip the treasury for supplies", fx:{G:[-12,-7],A:[7,11],F:[-5,-2]}, o:"Carts roll day and night to the river. The line holds — bought and paid for by the King." },
+          { l:"Let them forage and endure", fx:{A:[-9,-5],P:[-6,-3]}, o:"The army eats the countryside and curses the war. The line holds, barely, like a held breath." } ] },
+   { e:"🏆", role:"War Council", x:"The final push: {rival}'s host is broken-backed at {place}, one battle from ending it. Your word decides how hard the hammer falls.",
+     ch:[ { l:"Crush them utterly", fx:{A:[-8,-4],G:[13,19],P:[6,10]}, o:"The hammer falls. {rival} sues for peace with an empty treasury — which your men carry home for you. The war ends in your name." },
+          { l:"Offer generous terms", fx:{G:[6,10],P:[9,13],A:[-4,-1]}, o:"{rival} kneels to generous terms and tells its children the King was merciful AND mighty. A rarer monument than any battlefield." } ] } ] },
+ plague: { name:"The Grey Sickness", steps:[
+   { e:"🤧", role:"The Physicians", x:"A sickness — grey-faced, quiet, quick — has appeared in {place}. The physicians ask whether to close the roads.",
+     ch:[ { l:"Close the roads", fx:{G:[-8,-5],P:[4,7],F:[-5,-2]}, o:"The roads close under your seal. Trade sulks; the sickness, mostly, stays where it started." },
+          { l:"Roads stay open", fx:{G:[4,7],P:[-5,-2]}, o:"The carts roll on. So, in a few of them, does something grey and quiet." } ] },
+   { e:"🕯️", role:"The Physicians", x:"The Grey Sickness spreads despite everything. The physicians beg a royal decree: the sick housed apart, the dead burned quickly.",
+     ch:[ { l:"Issue the decree", fx:{P:[-7,-4],G:[-6,-3]}, o:"The decree goes out in your name and it works the way firebreaks work — cruelly, and just in time." },
+          { l:"No decree. We endure", fx:{P:[-10,-6],F:[-6,-3]}, o:"The realm endures the way fields endure hail. What's left standing in spring, we'll see." } ] },
+   { e:"🌅", role:"The Physicians", x:"The sickness thins at last. The physicians credit the King's decrees; the priests credit heaven; the people credit whoever fed them.",
+     ch:[ { l:"Proclaim a day of thanks", fx:{G:[-6,-3],P:[9,13]}, o:"Bells, bread, and the King's name in every prayer of thanks. The Grey Sickness becomes a story with you at its center." },
+          { l:"Just reopen everything", fx:{G:[7,11],P:[3,6]}, o:"Markets burst back like spring water. The sickness fades; the coin returns; the realm exhales." } ] } ] },
+ dragon: { name:"The Dragon of {place}", steps:[
+   { e:"🐉", role:"The Dragon", x:"Smoke on the horizon of {place}: a dragon — old, winged, and reasonable, its herald says — has taken the old watchtower as its seat.",
+     ch:[ { l:"Send an envoy to parley", fx:{G:[-5,-2]}, o:"The envoy returns pale and intact: the dragon wishes to discuss terms. It collects, it seems, more than gold." },
+          { l:"Muster the army", fx:{A:[-6,-3],G:[-6,-3]}, o:"The army musters and marches — and receives, mid-march, a courteous letter. In claw-writing. Addressed to the King." } ] },
+   { e:"📜", role:"The Dragon", x:"The dragon's terms, delivered in elegant claw: it will guard your border against {rival} forever — for a tithe of gold and one song a year, written new.",
+     ch:[ { l:"Accept the dragon's terms", fx:{G:[-9,-5],A:[10,14]}, o:"The tithe is paid, the minstrels are set to work, and your border gains a guardian that makes armies reconsider." },
+          { l:"No deals with dragons", fx:{A:[-5,-2],P:[3,6]}, o:"The letter is burned in the square to great applause. The dragon, watching from its tower, applauds too. Slowly." } ] },
+   { e:"🔥", role:"The Dragon", x:"The dragon makes its final move: it descends at dawn — not on the villages, but on the army of {rival} massing at your border. Then it looks to the throne, awaiting the King's word.",
+     ch:[ { l:"Reward it royally", fx:{G:[-11,-6],A:[8,12],P:[7,11]}, o:"Gold, a tower rebuilt in marble, and the best song of the year. The realm gains the first dragon in history on a king's payroll — YOUR payroll." },
+          { l:"Drive it off while it's weak", fx:{A:[-11,-6],P:[-5,-2]}, o:"The attempt costs spears and dignity; the dragon leaves on its own schedule, unhurried, taking the tower's roof as a souvenir." } ] } ] }
+};
+
+var ENDINGS = {
+ Glow:{ t:"THE EMPTY VAULT", x:"The last coin is spent, the creditors come with carts, and the throne itself is carried out to settle the debts. A king can survive many things. Arithmetic is not one of them." },
+ Ghigh:{ t:"BURIED IN GOLD", x:"The treasury overflows into the halls, the kitchens, the chapel. The merchants move in to manage it all, politely, permanently. You are the richest prisoner in the realm — crowned daily, consulted never." },
+ Flow:{ t:"THE GREAT HUNGER", x:"First the dogs go quiet. Then the villages. The people leave on foot with their carts and their children, looking for a kingdom where the King remembered bread. Yours becomes a very quiet country." },
+ Fhigh:{ t:"THE ENDLESS FEAST", x:"Granaries burst, stores rot faster than they can be eaten, and the rats grow bold, fat, and organized. The realm drowns in plenty while the court argues over whose feast it is." },
+ Alow:{ t:"NO BLADES LEFT", x:"With no army left to speak of, the riders come in the first snow and take the capital by spring. They find the crown in good order. It is the kingdom that was missing." },
+ Ahigh:{ t:"THE ETERNAL ARMY", x:"Soldiers outnumber plows ten to one, and an army that large eventually asks the obvious question. The generals crown one of their own by midsummer. Your statue makes a fine gatepost." },
+ Plow:{ t:"THE SILENT SQUARE", x:"They come at dawn without torches this time — just numbers. The guards step aside like water. The throne room is empty when you reach it, and somehow already dusty." },
+ Phigh:{ t:"BELOVED AS A GOD", x:"They build shrines. They stop working to celebrate you. Decisions pile unsigned while the kingdom dances itself into ruin, praising the King at every step down. Worship, it turns out, is not obedience." }
+};
+
+var S, stage = document.getElementById("stage");
+function saveBest(){
+  try{ localStorage.setItem("crownfall_best", String(Math.max(S.best, S.years*4 + S.seasonIdx))); }catch(e){}
+}
+function reset(){
+  S = { m:{G:50,F:50,A:50,P:50}, cardNo:0, seasonIdx:0, best:0, mode:"title", sel:0,
+        card:null, lastFx:null, lastOut:"", note:"", arc:null, arcDue:0, arcPlace:null, recentTpl:[], recentRoles:[],
+        rival:pick(RIVALS), ending:null, driftNote:"" };
+  try{ S.best = parseInt(localStorage.getItem("crownfall_best")||"0",10)||0; }catch(e){}
+}
+reset();
+var SEASONS = ["Spring","Summer","Autumn","Winter"];
+function yearOf(){ return Math.floor(S.cardNo/4)+1; }
+function seasonOf(){ return SEASONS[S.cardNo%4]; }
+function fill(t, ctx){
+  return t.replace(/\{name\}/g, ctx.name).replace(/\{place\}/g, ctx.place).replace(/\{rival\}/g, S.rival)
+          .replace(/\{crop\}/g, ctx.crop).replace(/\{beast\}/g, ctx.beast);
+}
+function rollFx(fx){
+  var d = {G:0,F:0,A:0,P:0};
+  for (var k in fx){ d[k] = ri(fx[k][0], fx[k][1]); }
+  return d;
+}
+function makeCtx(){ return { name: pick(FIRST)+" "+pick(EPITHET), place: pick(PLACES), crop: pick(CROPS), beast: pick(BEASTS) }; }
+function buildCard(kind, roleObj, tpl, ctx){
+  return { kind:kind, e: roleObj.e, role: roleObj.role, who: ctx.name, x: fill(tpl.x, ctx),
+           ch: tpl.ch.map(function(c){ return { l: fill(c.l, ctx), fx: c.fx, o: fill(c.o, ctx) }; }) };
+}
+function genCard(){
+  var ctx = makeCtx(), i, roleObj, tpl;
+  // 1) Arc step due?
+  if (S.arc){
+    if (S.arcDue <= 0){
+      var arc = ARCS[S.arc.type];
+      tpl = arc.steps[S.arc.step];
+      roleObj = { e: tpl.e, role: tpl.role };
+      if (S.arcPlace) ctx.place = S.arcPlace;
+      return buildCard("arc", roleObj, tpl, ctx);
+    }
+  }
+  // 2) State-triggered card?
+  var trig = STATE_CARDS.filter(function(c){ return c.when(S); });
+  if (trig.length && Math.random() < 0.45){
+    tpl = pick(trig);
+    roleObj = { e: tpl.e, role: tpl.role };
+    return buildCard("state", roleObj, tpl, ctx);
+  }
+  // 3) Generic realm event?
+  if (Math.random() < 0.16){
+    tpl = pick(GENERIC);
+    roleObj = { e: tpl.e, role: tpl.role };
+    return buildCard("generic", roleObj, tpl, ctx);
+  }
+  // 4) Normal petitioner — avoid recent roles/templates
+  for (i=0;i<6;i++){
+    roleObj = pick(ROLES);
+    if (S.recentRoles.indexOf(roleObj.role) === -1) break;
+  }
+  for (i=0;i<6;i++){
+    tpl = pick(roleObj.t);
+    if (S.recentTpl.indexOf(tpl.x.slice(0,24)) === -1) break;
+  }
+  S.recentRoles.push(roleObj.role); if (S.recentRoles.length>3) S.recentRoles.shift();
+  S.recentTpl.push(tpl.x.slice(0,24)); if (S.recentTpl.length>6) S.recentTpl.shift();
+  return buildCard("normal", roleObj, tpl, ctx);
+}
+function maybeStartArc(){
+  if (S.arc || S.cardNo < 6) return;
+  if (Math.random() < 0.16){
+    var types = ["war","plague","dragon"];
+    S.arc = { type: pick(types), step: 0 };
+    S.arcPlace = pick(PLACES);
+    S.arcDue = ri(1,3);
+  }
+}
+function nextCard(){
+  S.card = genCard();
+  S.sel = 0;
+  S.mode = "card";
+  paint();
+}
+function choose(idx){
+  var c = S.card.ch[idx]; if (!c) return;
+  var d = rollFx(c.fx);
+  S.lastFx = d; S.lastOut = c.o;
+  S.m.G += d.G; S.m.F += d.F; S.m.A += d.A; S.m.P += d.P;
+  var wasArcStep = (S.card.kind === "arc");
+  // season advance + new-year drift
+  S.cardNo++;
+  S.driftNote = "";
+  if (S.cardNo % 4 === 0){
+    S.m.F -= 4; S.m.G += 4; S.m.A -= 2;
+    S.driftNote = "A new year turns on the King's word — taxes gathered (💰+4), stores eaten (🌾−4), the army's upkeep paid (⚔️−2).";
+  }
+  if (wasArcStep && S.arc){
+    S.arc.step++;
+    if (S.arc.step >= ARCS[S.arc.type].steps.length){ S.arc = null; }
+    else S.arcDue = ri(2,3);
+  } else if (S.arc){
+    S.arcDue--;
+  }
+  maybeStartArc();
+  // death check
+  var e = null;
+  if (S.m.G<=0) e="Glow"; else if (S.m.G>=100) e="Ghigh";
+  else if (S.m.F<=0) e="Flow"; else if (S.m.F>=100) e="Fhigh";
+  else if (S.m.A<=0) e="Alow"; else if (S.m.A>=100) e="Ahigh";
+  else if (S.m.P<=0) e="Plow"; else if (S.m.P>=100) e="Phigh";
+  if (e){ S.ending = e; S.years = yearOf(); saveBest(); S.mode = "result"; paint(); return; }
+  S.mode = "result";
+  paint();
+}
+
+// ================= Rendering =================
+var MICON = { G:"💰", F:"🌾", A:"⚔️", P:"❤️" };
+function metersHTML(){
+  var h = '<div class="meters">';
+  ["G","F","A","P"].forEach(function(k){
+    var v = Math.max(0, Math.min(100, S.m[k]));
+    var cls = "fill" + (v<=20 ? " low" : (v>=85 ? " high" : ""));
+    h += '<div class="meter"><span>'+MICON[k]+'</span><div class="bar"><div class="'+cls+'" style="width:'+v+'%"></div></div><span class="val">'+S.m[k]+'</span></div>';
+  });
+  return h + '</div>';
+}
+function hud(){
+  return '<div class="hud"><span>👑 KING REALVON</span><span>Year '+yearOf()+' · '+seasonOf()+'</span></div>';
+}
+function focusMenu(opts){
+  var n = opts.length, cur = opts[S.sel];
+  var prev = opts[(S.sel-1+n)%n], next = opts[(S.sel+1)%n];
+  return '<div class="focus"><div class="fside" id="fprev">▲ '+prev.label+'</div>' +
+    '<div class="fcur" id="fcur">'+cur.label+'</div>' +
+    '<div class="fside" id="fnext">▼ '+next.label+'</div>' +
+    '<div class="fpos">'+(S.sel+1)+' of '+n+' — swipe to browse, pinch the gold box to decree</div></div>';
+}
+function singleBtn(label){ return '<div class="opts"><div class="opt sel" id="singlebtn">'+label+'</div></div>'; }
+function deltasHTML(d){
+  if (!d) return "";
+  var parts = [];
+  ["G","F","A","P"].forEach(function(k){
+    if (d[k]) parts.push('<span class="'+(d[k]>0?"up":"dn")+'">'+MICON[k]+' '+(d[k]>0?"+":"−")+Math.abs(d[k])+'</span>');
+  });
+  return parts.length ? '<div class="deltas">'+parts.join(" · ")+'</div>' : '<div class="deltas"><span class="small">The realm holds its breath — nothing changes.</span></div>';
+}
+var menuOpts = [];
+function paint(){
+  var html = "";
+  if (S.mode === "title"){
+    var bestY = Math.floor(S.best/4), bestS = S.best%4;
+    menuOpts = [ { label:"▶ Take the throne", fn:function(){ nextCard(); } } ];
+    html = '<div class="kicker">A Game of Rule</div><h1>CROWNFALL</h1><div class="bigemoji">👑</div>' +
+      '<p class="sub">All power flows through the King.</p>' +
+      '<p class="body center">Petitioners come to <b>King Realvon</b> — generals, witches, merchants, mothers — and no two are ever alike. Every decree moves your <b>Gold, Food, Army,</b> and <b>People</b>. If any one empties or overflows, your reign ends. Rule as long as you can.</p>' +
+      (S.best ? '<p class="body center small">Longest reign so far: <b>'+bestY+' years, '+bestS+' seasons</b></p>' : '') +
+      singleBtn("▶ Take the throne");
+  } else if (S.mode === "card"){
+    var c = S.card;
+    menuOpts = c.ch.map(function(ch, i){ return { label: ch.l, fn: (function(j){ return function(){ choose(j); }; })(i) }; });
+    html = hud() + metersHTML() +
+      '<div class="card"><div class="who"><div class="emo">'+c.e+'</div><div><div class="nm">'+(c.kind==="generic"||c.kind==="state" ? c.role : c.who)+'</div><div class="rl">'+(c.kind==="generic"||c.kind==="state" ? "Petition to the Crown" : c.role+" · petitions the King")+'</div></div></div>' +
+      '<div class="ask">'+c.x+'</div></div>' +
+      (S.arc && c.kind!=="arc" ? '<div class="note">⚜️ '+fill(ARCS[S.arc.type].name, { name:"", place:(S.arcPlace||""), crop:"", beast:"" })+' continues…</div>' : '') +
+      focusMenu(menuOpts) + '<div class="hint">Everything is decided by the King alone.</div>';
+  } else if (S.mode === "result"){
+    var last = !!S.ending;
+    menuOpts = [ { label: last ? "⚰️ See how it ended" : "▶ Next petitioner", fn:function(){
+        if (S.ending){ S.mode="over"; paint(); } else nextCard();
+      } } ];
+    html = hud() + metersHTML() + '<div class="card"><div class="ask">'+S.lastOut+'</div></div>' +
+      deltasHTML(S.lastFx) +
+      (S.driftNote ? '<div class="note">'+S.driftNote+'</div>' : '') +
+      singleBtn(last ? "⚰️ See how it ended" : "▶ Next petitioner");
+  } else if (S.mode === "over"){
+    var en = ENDINGS[S.ending];
+    menuOpts = [ { label:"▶ Rule again", fn:function(){ var b=S.best; reset(); S.best=b; nextCard(); } } ];
+    html = '<div class="kicker">The Reign of King Realvon</div><div class="bigemoji">⚰️</div><h2 class="center">'+en.t+'</h2>' +
+      '<p class="body center">'+en.x+'</p>' +
+      '<p class="body center">You ruled <b>'+Math.floor(S.cardNo/4)+' years and '+(S.cardNo%4)+' seasons</b> — '+S.cardNo+' decrees, every one of them yours.</p>' +
+      singleBtn("▶ Rule again");
+  }
+  stage.innerHTML = html;
+  var fc = document.getElementById("fcur"), fp = document.getElementById("fprev"), fn = document.getElementById("fnext"), sb = document.getElementById("singlebtn");
+  if (fc) fc.addEventListener("click", function(){ activateMenu(); });
+  if (fp) fp.addEventListener("click", function(){ moveSel(-1); });
+  if (fn) fn.addEventListener("click", function(){ moveSel(1); });
+  if (sb) sb.addEventListener("click", function(){ activateMenu(); });
+  fitToLens();
+}
+function fitToLens(){
+  try{ requestAnimationFrame(function(){
+    stage.style.transform = "";
+    var need = stage.scrollHeight, avail = window.innerHeight || 600;
+    if (need > avail){ var sc = Math.max(0.45,(avail/need)*0.99); stage.style.transformOrigin="top center"; stage.style.transform="scale("+sc+")"; }
+  }); }catch(e){}
+}
+function moveSel(d){
+  if (!menuOpts.length) return;
+  S.sel = (S.sel + d + menuOpts.length) % menuOpts.length;
+  paint();
+}
+function activateMenu(){ var o = menuOpts[S.sel] || menuOpts[0]; if (o && o.fn) o.fn(); }
+
+document.addEventListener("keydown", function(e){
+  if (e.key==="ArrowDown" || e.key==="ArrowRight"){ moveSel(1); e.preventDefault(); }
+  else if (e.key==="ArrowUp" || e.key==="ArrowLeft"){ moveSel(-1); e.preventDefault(); }
+  else if (e.key==="Enter" || e.key===" "){ activateMenu(); e.preventDefault(); }
+});
+var tx=0, ty=0;
+document.addEventListener("touchstart", function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+document.addEventListener("touchend", function(e){
+  var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<24 && Math.abs(dy)<24) return;
+  if (Math.abs(dy) >= Math.abs(dx)) moveSel(dy<0 ? 1 : -1);
+  else moveSel(dx>0 ? 1 : -1);
+}, {passive:true});
+
+paint();
+</script>
+</body>
+</html>

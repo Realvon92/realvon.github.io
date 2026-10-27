@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=600, height=600, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<title>X Portal — Jump to X from your Ray-Ban Display</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { background:#000; color:#f5f0e6; font-family: Georgia, 'Times New Roman', serif; overflow:hidden; }
+  #stage { width:600px; height:600px; margin:0 auto; position:relative; padding:20px 26px 12px; display:flex; flex-direction:column; }
+  @media (max-width:620px){ #stage{ width:100vw; height:100vh; padding:14px 14px; } }
+  .kicker { color:#e8b33c; letter-spacing:3px; font-size:15px; text-transform:uppercase; text-align:center; }
+  h1 { font-size:52px; text-align:center; line-height:1.05; margin:10px 0 4px; color:#fff; }
+  .sub { text-align:center; color:#bdb49e; font-size:19px; font-style:italic; }
+  .body { font-size:21px; line-height:1.35; color:#efe9da; margin:8px 0; }
+  .body b { color:#e8b33c; }
+  .center { text-align:center; }
+  .bigx { text-align:center; font-size:80px; margin:8px 0 2px; color:#fff; font-family: Arial, sans-serif; font-weight:bold; }
+  .focus { margin-top:auto; display:flex; flex-direction:column; gap:7px; }
+  .fside { text-align:center; color:#8a8271; font-size:19px; padding:5px 10px; cursor:pointer; line-height:1.2; }
+  .fcur { border:3px solid #e8b33c; background:#1c1503; color:#fff; border-radius:14px; padding:17px 15px; font-size:26px; text-align:center; cursor:pointer; line-height:1.25; }
+  .fpos { text-align:center; color:#77705f; font-size:15px; }
+  .hint { text-align:center; color:#77705f; font-size:15px; margin-top:9px; font-style:italic; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+"use strict";
+// X PORTAL — a launcher. Pinching a destination navigates the glasses'
+// web view straight to that part of x.com (a full top-level jump, not a
+// frame). Whether the Display web view allows leaving this page is the
+// experiment: if X loads, you're in. If the page refuses to move, the
+// viewer blocks outbound jumps and no web app can browse X directly.
+var DESTS = [
+  { label:"🔑 X — Log in first", url:"https://x.com/login" },
+  { label:"🏠 X — Home timeline", url:"https://x.com/home" },
+  { label:"🔥 X — Explore / trending", url:"https://x.com/explore" },
+  { label:"🔔 X — Notifications", url:"https://x.com/notifications" },
+  { label:"🔎 X — Search", url:"https://x.com/search" }
+];
+var S = { sel: 1, jumping: false }; // start on Home
+var stage = document.getElementById("stage");
+function jump(url){
+  S.jumping = true;
+  stage.innerHTML = '<div class="kicker">X Portal</div><div class="bigx">𝕏</div>' +
+    '<p class="body center">Jumping to X…</p>' +
+    '<p class="body center">If this screen just sits here, the glasses are blocking the jump — close the app and tell Muse what happened.</p>';
+  setTimeout(function(){ window.location.href = url; }, 350);
+}
+function paint(){
+  if (S.jumping) return;
+  var n = DESTS.length, cur = DESTS[S.sel];
+  var prev = DESTS[(S.sel-1+n)%n], next = DESTS[(S.sel+1)%n];
+  stage.innerHTML =
+    '<div class="kicker">A Doorway, Not a Browser</div><h1>X PORTAL</h1><div class="bigx">𝕏</div>' +
+    '<p class="sub">Pinch a door and the lens jumps straight to X.</p>' +
+    '<p class="body center">First visit? Choose <b>Log in</b> — X hides timelines until you sign in. To come back here, close the app and reopen it; there is no back button on the glasses.</p>' +
+    '<div class="focus"><div class="fside" id="fprev">▲ '+prev.label+'</div>' +
+    '<div class="fcur" id="fcur">'+cur.label+'</div>' +
+    '<div class="fside" id="fnext">▼ '+next.label+'</div>' +
+    '<div class="fpos">'+(S.sel+1)+' of '+n+' — swipe to browse, pinch the gold box to jump</div></div>' +
+    '<div class="hint">Built by Muse for Realvon</div>';
+  var fc = document.getElementById("fcur"), fp = document.getElementById("fprev"), fn = document.getElementById("fnext");
+  if (fc) fc.addEventListener("click", function(){ jump(DESTS[S.sel].url); });
+  if (fp) fp.addEventListener("click", function(){ moveSel(-1); });
+  if (fn) fn.addEventListener("click", function(){ moveSel(1); });
+  fitToLens();
+}
+function fitToLens(){
+  try{ requestAnimationFrame(function(){
+    stage.style.transform = "";
+    var need = stage.scrollHeight, avail = window.innerHeight || 600;
+    if (need > avail){ var sc = Math.max(0.45,(avail/need)*0.99); stage.style.transformOrigin="top center"; stage.style.transform="scale("+sc+")"; }
+  }); }catch(e){}
+}
+function moveSel(d){ S.sel = (S.sel + d + DESTS.length) % DESTS.length; paint(); }
+document.addEventListener("keydown", function(e){
+  if (e.key==="ArrowDown" || e.key==="ArrowRight"){ moveSel(1); e.preventDefault(); }
+  else if (e.key==="ArrowUp" || e.key==="ArrowLeft"){ moveSel(-1); e.preventDefault(); }
+  else if (e.key==="Enter" || e.key===" "){ if (!S.jumping) jump(DESTS[S.sel].url); e.preventDefault(); }
+});
+var tx=0, ty=0;
+document.addEventListener("touchstart", function(e){ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; }, {passive:true});
+document.addEventListener("touchend", function(e){
+  var dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if (Math.abs(dx)<24 && Math.abs(dy)<24) return;
+  if (Math.abs(dy) >= Math.abs(dx)) moveSel(dy<0 ? 1 : -1);
+  else moveSel(dx>0 ? 1 : -1);
+}, {passive:true});
+paint();
+</script>
+</body>
+</html>

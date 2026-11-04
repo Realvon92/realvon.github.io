@@ -10,6 +10,7 @@
     --gold:#f5c542; --gold2:#b8860b; --ink:#0d0a07; --panel:#1a140d; --panel2:#241b10;
     --line:#3a2c17; --txt:#f3e9d2; --dim:#b8a67e; --red:#e5484d; --grn:#58c472;
   }
+  html{ overflow-x:hidden; }
   body{ background:#070503; color:var(--txt); font-family:Georgia,'Times New Roman',serif; overflow-x:hidden; }
   #app{ max-width:430px; margin:0 auto; min-height:100vh; background:var(--ink); position:relative; padding-bottom:74px; overflow-x:hidden; }
   button{ font-family:inherit; cursor:pointer; }
@@ -79,6 +80,11 @@
   @keyframes walkBob{ 0%,100%{ transform:translateY(0) rotate(-2.5deg);} 50%{ transform:translateY(-5px) rotate(2.5deg);} }
   .proj{ position:absolute; bottom:66px; width:12px; height:12px; border-radius:50%; z-index:6; pointer-events:none; transform:translate(-50%,0); transition:left .22s linear; }
   .proj.arrow{ width:17px; height:4px; border-radius:2px; }
+  #scene.shake{ animation:shk .32s; } #scene.shakeBig{ animation:shk .55s; }
+  @keyframes shk{ 20%{ transform:translate(-3px,1px);} 40%{ transform:translate(3px,-2px);} 60%{ transform:translate(-2px,1px);} 80%{ transform:translate(2px,0);} }
+  .spark{ position:absolute; bottom:58px; width:7px; height:7px; border-radius:50%; pointer-events:none; z-index:7; }
+  .chestfx{ position:absolute; bottom:56px; font-size:30px; z-index:7; pointer-events:none; transform:translateX(-50%); animation:chestFall .85s ease-in forwards; }
+  @keyframes chestFall{ 0%{ margin-bottom:110px; opacity:0; } 25%{ opacity:1; } 70%{ margin-bottom:0; } 85%{ margin-bottom:14px; } 100%{ margin-bottom:4px; opacity:0; } }
   .fighter.hitflash .av{ animation:hitf .18s; } @keyframes hitf{ 50%{ filter:brightness(2.4);} }
   .dmg{ position:absolute; left:50%; top:-4px; transform:translateX(-50%); font-weight:bold; font-size:15px; color:#ffe9a8;
     text-shadow:0 1px 3px #000; pointer-events:none; animation:floatUp .9s ease-out forwards; z-index:9; white-space:nowrap; }
@@ -98,9 +104,9 @@
   .pcard .hpfill{ height:100%; background:var(--grn); }
   /* hero detail */
   .statgrid{ display:flex; gap:6px; text-align:center; margin:7px 0; }
-  .statgrid div{ flex:1; background:var(--panel2); border-radius:8px; padding:5px 2px; }
+  .statgrid div{ flex:1; min-width:0; background:var(--panel2); border-radius:8px; padding:5px 2px; }
   .statgrid b{ display:block; font-size:15px; color:#fff; } .statgrid span{ font-size:9.5px; color:var(--dim); letter-spacing:.5px; }
-  #gearGrid{ display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+  #gearGrid{ display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
   .slot{ background:var(--panel2); border:1px solid var(--line); border-radius:9px; padding:6px 4px; text-align:center; cursor:pointer; min-height:64px; }
   .slot .si{ font-size:19px; } .slot .sn{ font-size:9.5px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .slot .sp{ font-size:9.5px; color:var(--dim); } .slot.empty{ opacity:.55; }
@@ -243,6 +249,8 @@
           <button class="btn small" id="luckBtn">Upgrade</button>
           <label class="tog"><input type="checkbox" id="autoOpenTog"> Auto-open chests</label>
           <label class="tog"><input type="checkbox" id="autoSellTog"> Auto-sell Common loot</label>
+          <label class="tog"><input type="checkbox" id="soundTog"> Sound effects</label>
+          <label class="tog"><input type="checkbox" id="hapTog"> Vibration (mobile)</label>
         </div>
       </div>
     </div>
@@ -427,7 +435,7 @@ function defaultState(){
     zone:1, stage:1, killsThisStage:0, progress:{1:1}, unlockedZones:1, clearedZones:[], loop:0, maxLoop:0,
     heroes:{}, owned:[], party:[], sel:null,
     bag:[], counters:{kills:0,chests:0,goldEarned:0,sold:0,bosses:0,recruits:0},
-    goals:[], feats:{}, settings:{speed:1, autoOpen:false, autoSell:false},
+    goals:[], feats:{}, settings:{speed:1, autoOpen:false, autoSell:false, sound:true, haptics:true},
     mods:{rich:false, onehit:false, god:false, rain:false, luck:false, boost:false, recruit:false, turbo:false},
     lastSeen:Date.now()
   };
@@ -545,6 +553,39 @@ function shootProj(x1, x2, color, arrow){
   requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ p.style.left=x2+'%'; }); });
   setTimeout(()=>p.remove(), 300);
 }
+
+/* ---- sound + feel (Phase 2): tiny synthesized SFX, haptics, shake, particles ---- */
+let AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(AC && AC.state==='suspended') AC.resume(); return AC; }
+document.addEventListener('pointerdown', ()=>{ ac(); }, false);
+function tone(f0, f1, dur, type, vol, when){
+  if(!S || !S.settings || S.settings.sound===false) return;
+  const c=ac(); if(!c) return;
+  const t=c.currentTime+(when||0), o=c.createOscillator(), g=c.createGain();
+  o.type=type||'square'; o.frequency.setValueAtTime(f0, t);
+  if(f1) o.frequency.exponentialRampToValueAtTime(Math.max(30,f1), t+dur);
+  g.gain.setValueAtTime(vol||0.05, t); g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+  o.connect(g); g.connect(c.destination); o.start(t); o.stop(t+dur+0.03);
+}
+function sHit(){ tone(220,90,0.07,'square',0.035); }
+function sCrit(){ tone(520,140,0.12,'sawtooth',0.055); tone(880,220,0.1,'square',0.03,0.02); }
+function sShoot(){ tone(700,300,0.06,'sine',0.028); }
+function sHurt(){ tone(160,70,0.09,'square',0.04); }
+function sDie(){ tone(300,40,0.25,'sawtooth',0.05); }
+function sHeal(){ tone(500,900,0.12,'sine',0.03); }
+function sChest(){ tone(520,0,0.08,'triangle',0.05); tone(780,0,0.09,'triangle',0.05,0.07); tone(1040,0,0.12,'triangle',0.05,0.15); }
+function sCoin(){ tone(900,0,0.07,'triangle',0.045); tone(1300,0,0.1,'triangle',0.045,0.06); }
+function sFanfare(){ [392,523,659,784].forEach((f,i)=>tone(f,0,0.16,'triangle',0.06,i*0.09)); }
+function buzz(p){ if(S && S.settings && S.settings.haptics!==false && navigator.vibrate) navigator.vibrate(p); }
+function shakeScene(big){ const s=document.getElementById('scene'); if(!s) return; s.classList.remove('shake','shakeBig'); void s.offsetWidth; s.classList.add(big?'shakeBig':'shake'); }
+function burst(x, color){
+  const f=document.getElementById('field'); if(!f) return;
+  for(let i=0;i<10;i++){ const s=document.createElement('div'); s.className='spark'; s.style.left=(x==null?88:x)+'%'; s.style.background=color; s.style.boxShadow='0 0 6px '+color; f.appendChild(s);
+    const a=Math.random()*Math.PI*2, d=26+Math.random()*46, dx=Math.cos(a)*d, dy=Math.sin(a)*d-18;
+    const an=s.animate([{transform:'translate(-50%,0)',opacity:1},{transform:'translate(calc(-50% + '+dx+'px), '+dy+'px)',opacity:0}],{duration:420+Math.random()*220, easing:'cubic-bezier(.1,.7,.3,1)'});
+    an.onfinish=()=>s.remove(); }
+}
+function chestDropFx(x){ const f=document.getElementById('field'); if(!f) return; const d=document.createElement('div'); d.className='chestfx'; d.textContent='🧰'; d.style.left=(x==null?88:x)+'%'; f.appendChild(d); setTimeout(()=>d.remove(), 900); }
 function movePhase(dt){
   const foe=E.find(e=>e.hp>0) || null;
   S.party.forEach((id,idx)=>{
@@ -605,7 +646,7 @@ function combatTick(dt){
       if(healTimers[id]>=3.2){
         healTimers[id]=0;
         const target=S.party.map(h=>({h,frac:B[h]/heroStats(h).hp})).filter(x=>x.frac<1 && B[x.h]>0).sort((a,b)=>a.frac-b.frac)[0];
-        if(target){ const amt=Math.round(st.atk*1.1 + heroStats(target.h).hp*0.08); B[target.h]=Math.min(heroStats(target.h).hp, B[target.h]+amt); floater(target.h,'+'+amt,'heal'); updateBars(); renderPartyStrip(); }
+        if(target){ const amt=Math.round(st.atk*1.1 + heroStats(target.h).hp*0.08); B[target.h]=Math.min(heroStats(target.h).hp, B[target.h]+amt); floater(target.h,'+'+amt,'heal'); sHeal(); updateBars(); renderPartyStrip(); }
       }
     }
     if(timers[id]>=1.6/(1+(st.sw||0)/100)){
@@ -619,8 +660,8 @@ function combatTick(dt){
       if(st.ig) d+=Math.round(d*st.ig/100);
       if(S.mods && S.mods.onehit) d=e.hp;
       e.hp-=d;
-      if(ranged){ shootProj(PX[id]+4, e.x-3, PROJ_COLOR[base.cls]||'#ffe9a8', base.cls==='Ranger'); const dd=d, cc=crit, er=e; setTimeout(()=>{ if(E[ti]===er){ hitFlash('e'+ti); floater('e'+ti, dd, cc?'crit':''); } },180); }
-      else { lunge(id,'lungeR'); hitFlash('e'+ti); floater('e'+ti, d, crit?'crit':''); }
+      if(ranged){ sShoot(); shootProj(PX[id]+4, e.x-3, PROJ_COLOR[base.cls]||'#ffe9a8', base.cls==='Ranger'); const dd=d, cc=crit, er=e; setTimeout(()=>{ if(E[ti]===er){ hitFlash('e'+ti); floater('e'+ti, dd, cc?'crit':''); } },180); }
+      else { if(crit){ sCrit(); buzz(15); } else sHit(); lunge(id,'lungeR'); hitFlash('e'+ti); floater('e'+ti, d, crit?'crit':''); }
       if(st.ls && B[id]>0){ const h=Math.round(d*st.ls/100); if(h>0) B[id]=Math.min(heroStats(id).hp, B[id]+h); }
       if(e.hp<=0) killEnemy(ti); else updateBars();
     }
@@ -640,10 +681,10 @@ function combatTick(dt){
       else{
         const d=dmgCalc(e.atk, st.def);
         B[tid]-=d;
-        if(eranged){ shootProj(e.x-4, (PX[tid]==null?fx:PX[tid])+3, PROJ_COLOR[e.art]||'#ff9d5c', false); const dd=d; setTimeout(()=>{ hitFlash(tid); floater(tid,'-'+dd,'hurt'); },180); }
-        else { lunge('e'+i,'lungeL'); hitFlash(tid); floater(tid,'-'+d,'hurt'); }
+        if(eranged){ shootProj(e.x-4, (PX[tid]==null?fx:PX[tid])+3, PROJ_COLOR[e.art]||'#ff9d5c', false); const dd=d; setTimeout(()=>{ hitFlash(tid); floater(tid,'-'+dd,'hurt'); sHurt(); },180); }
+        else { sHurt(); lunge('e'+i,'lungeL'); hitFlash(tid); floater(tid,'-'+d,'hurt'); }
         if(st.th && e.hp>1){ const rf=Math.min(e.hp-1, Math.round(d*st.th/100)); if(rf>0){ e.hp-=rf; floater('e'+i,'🌵'+rf,''); } }
-        if(B[tid]<=0){ B[tid]=0; toast(HERO_BY_ID[tid].name+' is down!'); }
+        if(B[tid]<=0){ B[tid]=0; toast(HERO_BY_ID[tid].name+' is down!'); shakeScene(false); buzz(70); }
         updateBars(); renderPartyStrip();
         if(!aliveHeroes().length) wipe();
       }
@@ -656,18 +697,19 @@ function combatTick(dt){
   if(S.settings.autoOpen && S.chests>0 && Date.now()-lastAutoOpen>1200){ lastAutoOpen=Date.now(); openChest(true); }
 }
 function wipe(){
-  toast('Party wiped — regrouping at full strength.');
+  toast('Party wiped — regrouping at full strength.'); tone(200,50,0.4,'sawtooth',0.05); shakeScene(true);
   S.party.forEach(id=>B[id]=heroStats(id).hp);
   spawnEnemies(); renderPartyStrip();
 }
 function killEnemy(ti){
   const e=E[ti]; if(!e || e.dead) return; e.dead=true; e.hp=0;
+  sDie(); burst(e.x, e.boss? '#ffd700' : '#ff9d5c'); if(e.boss) buzz(50);
   S.counters.kills++;
   gainGold(Math.round(e.gold*(1+partyAffix('greedy')/100)));
   S.party.forEach(id=>{ if(B[id]>0) gainXp(id, e.xp); });
   /* post-kill breather heal */
   S.party.forEach(id=>{ if(B[id]>0){ const mx=heroStats(id).hp; B[id]=Math.min(mx, B[id]+mx*0.12); } });
-  if((S.mods && S.mods.rain) || Math.random()<0.22 || e.elite){ S.chests++; toast('A sealed chest dropped! 🧰'); }
+  if((S.mods && S.mods.rain) || Math.random()<0.22 || e.elite){ S.chests++; toast('A sealed chest dropped! 🧰'); sChest(); chestDropFx(e.x); }
   if(Math.random()<0.03){ S.shards++; }
   if(e.boss){ bossDown(); }
   else{
@@ -686,11 +728,12 @@ function advanceStage(){
   if(S.stage < z.stages){ S.stage++; S.progress[S.zone]=S.stage; }
   S.chests++; addAcctXp(1);
   S.party.forEach(id=>{ const mx=heroStats(id).hp; B[id]=Math.max(B[id]||0, Math.round(mx*0.6)); });
-  toast('Stage cleared! +1 chest');
+  toast('Stage cleared! +1 chest'); sCoin();
   spawnEnemies();
 }
 function bossDown(){
   const z=ZONES[S.zone-1];
+  sFanfare(); shakeScene(true); buzz([40,50,40]);
   S.counters.bosses++; S.chests+=3; S.shards+=6; S.gems+=5; addAcctXp(3);
   const firstClear=!S.clearedZones.includes(S.zone);
   if(firstClear){
@@ -700,7 +743,7 @@ function bossDown(){
   let loopMsg='';
   if(S.zone===ZONES.length && (S.maxLoop||0)<=(S.loop||0)){ S.maxLoop=(S.loop||0)+1; loopMsg='<p style="margin-top:6px;color:var(--gold)">♾️ <b>Endless Loop '+S.maxLoop+' unlocked!</b> Every loop makes ALL enemies stronger — and ALL loot better. Set your Loop below the battlefield.</p>'; }
   showModal('🏆 '+z.boss.n+' is DOWN!',
-    '<p>You cleared <b>'+z.name+'</b>!</p><p style="margin-top:6px">Rewards: 🧰 +3 chests · 🧩 +6 shards · 💎 +5 gems</p>'+
+    '<p><b>'+z.name+'</b> — CLEARED!</p><p style="margin-top:6px">Rewards: 🧰 +3 chests · 🧩 +6 shards · 💎 +5 gems</p>'+
     (firstClear && S.zone===1 ? '<p style="margin-top:6px;color:var(--gold)">New party slot unlocked — you can now field 3 heroes. Check the Heroes tab.</p>':'')+
     (firstClear && S.zone<ZONES.length ? '<p style="margin-top:6px">Next zone unlocked: <b>'+ZONES[S.zone].name+'</b></p>':'')+loopMsg,
     [{t:'Keep Hunting', fn:()=>{ closeModal(); if(firstClear && S.zone<ZONES.length){ S.zone++; S.stage=1; S.killsThisStage=0; } else { S.stage=ZONES[S.zone-1].stages; } spawnEnemies(); renderAll(); save(); }}]);
@@ -753,6 +796,7 @@ function sellEquipped(heroId, slot){
 function levelItemCost(it){ return 12 + it.lvl*10 + it.ilvl; }
 function levelUpItem(it){
   const c=levelItemCost(it);
+  if(S.mods && S.mods.rich) S.essence=Math.max(S.essence,c);
   if(S.essence<c){ toast('Not enough essence — sell loot to earn more.'); return false; }
   S.essence-=c; it.lvl++; it.base={atk:it.base.atk, def:it.base.def, hp:it.base.hp, crit:it.base.crit};
   refreshItemStats(it); toast(it.name+' leveled to +'+it.lvl); renderAll(); save(); return true;
@@ -765,6 +809,7 @@ function recruitHero(id, free){
   if(S.mods && S.mods.recruit) free=true;
   if(!free){
     const c=recruitCost(h);
+    if(S.mods && S.mods.rich){ if(c.shards) S.shards=Math.max(S.shards,c.shards); if(c.gems) S.gems=Math.max(S.gems,c.gems); }
     if(c.shards && S.shards<c.shards){ toast('Not enough 🧩 shards yet.'); return; }
     if(c.gems && S.gems<c.gems){ toast('Not enough 💎 gems yet.'); return; }
     if(c.shards) S.shards-=c.shards; if(c.gems) S.gems-=c.gems;
@@ -913,6 +958,7 @@ function renderChest(){
   $('#luckBtn').textContent='Upgrade · '+fmt(luckCost())+' 🪙';
   $('#openChestBtn').disabled=S.chests<=0;
   $('#autoOpenTog').checked=S.settings.autoOpen; $('#autoSellTog').checked=S.settings.autoSell;
+  $('#soundTog').checked=S.settings.sound!==false; $('#hapTog').checked=S.settings.haptics!==false;
 }
 function luckCost(){ return Math.round(120*Math.pow(1.4, S.luck-1)); }
 function renderHeroes(){
@@ -926,6 +972,7 @@ function renderHeroes(){
     else{ const c=recruitCost(h); right='<div style="text-align:right"><div style="font-size:12px;color:var(--gold)">'+(c.shards? '🧩 '+c.shards+' shards':'💎 '+c.gems+' gems')+'</div><button class="btn small" style="margin-top:4px">Recruit</button></div>'; }
     row.innerHTML='<div class="av">'+(artImg('hero-'+h.id)||h.icon)+'</div><div class="inf"><div class="hn">'+h.name+'</div><div class="hc">'+h.cls+' · '+RAR[h.rar].n+' · ATK '+h.atk+' DEF '+h.def+' HP '+h.hp+' CRIT '+h.crit+'%</div></div>'+right;
     row.querySelector('button').onclick=()=>{ owned? toggleParty(h.id) : recruitHero(h.id,false); };
+    row.onclick=e=>{ if(e.target.closest('button')) return; if(owned) toggleParty(h.id); };
     hl.appendChild(row);
   });
 }
@@ -941,7 +988,7 @@ function renderTrain(){
     const lvl=S.train[t.k], c=trainCost(t.k);
     const d=document.createElement('div'); d.className='card trainRow';
     d.innerHTML='<div class="inf"><div class="tn">'+t.n+' — Lv '+lvl+'</div><div class="td">'+t.d(lvl)+'</div></div><button class="btn small">Train · '+fmt(c)+' 🪙</button>';
-    d.querySelector('button').onclick=()=>{ if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.train[t.k]++; S.party.forEach(id=>{ if(B[id]==null||B[id]>0) B[id]=heroStats(id).hp; }); toast(t.n+' trained to Lv '+S.train[t.k]); renderAll(); save(); };
+    d.querySelector('button').onclick=()=>{ if(S.mods&&S.mods.rich) S.gold=Math.max(S.gold,c); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.train[t.k]++; S.party.forEach(id=>{ if(B[id]==null||B[id]>0) B[id]=heroStats(id).hp; }); toast(t.n+' trained to Lv '+S.train[t.k]); renderAll(); save(); };
     tl.appendChild(d);
   });
 }
@@ -988,9 +1035,11 @@ function renderLoop(){
 $('#loopDown').onclick=()=>{ if((S.loop||0)>0){ S.loop--; spawnEnemies(); renderAll(); save(); toast('Loop '+S.loop+' — enemies eased back a notch.'); } };
 $('#loopUp').onclick=()=>{ if((S.loop||0)<(S.maxLoop||0)){ S.loop++; spawnEnemies(); renderAll(); save(); toast('♾️ Loop '+S.loop+' — everything hits harder, loot rolls higher.'); } else toast('Beat The Hollow King at Loop '+(S.loop||0)+' to unlock Loop '+((S.loop||0)+1)+'.'); };
 $('#openChestBtn').onclick=()=>openChest(false);
-$('#luckBtn').onclick=()=>{ const c=luckCost(); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.luck++; toast('Luck up to Lv '+S.luck+' — better loot odds, instantly.'); renderAll(); save(); };
+$('#luckBtn').onclick=()=>{ const c=luckCost(); if(S.mods&&S.mods.rich) S.gold=Math.max(S.gold,c); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.luck++; toast('Luck up to Lv '+S.luck+' — better loot odds, instantly.'); renderAll(); save(); };
 $('#autoOpenTog').onchange=e=>{ S.settings.autoOpen=e.target.checked; save(); };
 $('#autoSellTog').onchange=e=>{ S.settings.autoSell=e.target.checked; save(); };
+$('#soundTog').onchange=e=>{ S.settings.sound=e.target.checked; save(); };
+$('#hapTog').onchange=e=>{ S.settings.haptics=e.target.checked; save(); };
 $('#speedBtn').onclick=()=>{ S.settings.speed=S.settings.speed>=2?1:2; renderAll(false); save(); };
 $('#stPrev').onclick=()=>{ if(S.stage>1){ S.stage--; S.killsThisStage=0; spawnEnemies(); renderAll(); save(); } };
 $('#stNext').onclick=()=>{ const mx=S.progress[S.zone]||1; if(S.stage<mx){ S.stage++; S.killsThisStage=0; spawnEnemies(); renderAll(); save(); } };

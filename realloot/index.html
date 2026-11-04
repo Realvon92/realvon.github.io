@@ -639,22 +639,33 @@ function updateUltBars(){
   S.party.forEach(id=>{ const fw=document.getElementById('f-'+id); if(!fw) return; const f=fw.querySelector('.ultfill'); if(f) f.style.width=(ULT[id]||0)+'%'; fw.classList.toggle('ultready', (ULT[id]||0)>=100); });
 }
 function frontHeroRX(){ let m=null; S.party.forEach(id=>{ if(B[id]>0 && RX[id]!=null) m=(m==null?RX[id]:Math.max(m,RX[id])); }); return m; }
+/* formation spacing: every fighter gets its own slot so nobody stacks on the same spot */
+function meleeIdxOf(id){ let n=0; for(const h of S.party){ if(h===id) break; if(!RANGED_CLS[HERO_BY_ID[h].cls]) n++; } return n; }
+function heroGap(id){ return RANGED_CLS[HERO_BY_ID[id].cls]? 36 : 14 + meleeIdxOf(id)*9; }
+function enemyGap(e, ai){ return (RANGED_E[e.art]? 36 : 14) + ai*10; }
 function movePhase(dt){
-  /* logic sets TARGETS only — the 60fps frame loop glides fighters to them */
+  /* logic sets TARGETS only — the 60fps frame loop glides fighters to them.
+     Formation rules (lane-battler style): heroes HOLD their side — melee advance at most
+     to midfield, ranged hold the back line — and enemies stream across the field to them. */
   const foe=E.find(e=>e.hp>0) || null;
   S.party.forEach((id,idx)=>{
     if(PX[id]==null) PX[id]=heroHome(idx);
     if(B[id]<=0) return;
     let want=heroHome(idx);
-    if(foe && foe.x!=null) want=Math.max(5, Math.min(88, foe.x - (RANGED_CLS[HERO_BY_ID[id].cls]?36:14)));
+    if(foe && foe.x!=null){
+      const cap=RANGED_CLS[HERO_BY_ID[id].cls]? 30 : 46;
+      want=Math.max(5, Math.min(cap, foe.x - heroGap(id)));
+    }
     PX[id]=want;
   });
   const fx=frontHeroRX();
+  let ai=0;
   E.forEach((e,i)=>{
-    if(e.x==null) e.x=106;
+    if(e.x==null) e.x=102;
     if(e.hp<=0) return;
+    const myAi=ai++;
     let want=(e.home!=null? e.home : 88);
-    if(fx!=null) want=Math.max(14, Math.min(96, fx + (RANGED_E[e.art]?36:14)));
+    if(fx!=null) want=Math.max(14, Math.min(97, fx + enemyGap(e, myAi)));
     e.tx=want;
   });
 }
@@ -678,7 +689,7 @@ function spawnEnemies(){
     const n=(S.stage>=10 && Math.random()<0.6)?2:1;
     for(let i=0;i<n;i++) E.push(mk(pickA(z.enemies),false,elite&&i===0));
   }
-  timers={}; E.forEach((e,i)=>{ timers['e'+i]=rnd(0.4,1.2); e.x=106; e.home=e.boss?84:(88-i*11); e.tx=e.home; });
+  timers={}; E.forEach((e,i)=>{ timers['e'+i]=rnd(0.4,1.2); e.x=102; e.home=e.boss?84:(88-i*11); e.tx=e.home; });
   buildScene(); updateBars();
 }
 function aliveHeroes(){ return S.party.filter(id=>B[id]>0); }
@@ -705,7 +716,7 @@ function combatTick(dt){
       const e=E[ti];
       const ranged=!!RANGED_CLS[base.cls];
       const hxr=(RX[id]==null? PX[id] : RX[id]);
-      if(e.x!=null && hxr!=null && (e.x-hxr) > (ranged?38:15.5)) return;   /* still walking into range */
+      if(e.x!=null && hxr!=null && (e.x-hxr) > heroGap(id)+1.5) return;   /* still walking into range */
       timers[id]=0;
       const crit=Math.random()*100<st.crit;
       let d=dmgCalc(st.atk, e.def); if(crit) d=Math.round(d*1.8);
@@ -733,7 +744,8 @@ function combatTick(dt){
       const alive=aliveHeroes(); if(!alive.length) return;
       const fxr=frontHeroRX(); const fx=(fxr!=null? fxr : frontHeroX()); if(fx==null) return;
       const eranged=!!RANGED_E[e.art];
-      if(e.x!=null && (e.x-fx) > (eranged?38:15.5)) return;   /* still advancing on the party */
+      const aiAlive=E.slice(0,i+1).filter(x=>x.hp>0).length-1;
+      if(e.x!=null && (e.x-fx) > enemyGap(e, aiAlive)+1.5) return;   /* still advancing on the party */
       timers['e'+i]=0;
       const tid=pickA(alive), st=heroStats(tid);
       if(S.mods && S.mods.god){ if(eranged) shootProj(e.x-4, fx+3, PROJ_COLOR[e.art]||'#ff9d5c', false); else lunge('e'+i,'lungeL'); floater(tid,'BLOCKED','heal'); updateBars(); }
@@ -1210,7 +1222,7 @@ function offlineGains(){
   ensureGoals(); spawnEnemies(); renderAll(); offlineGains(); save();
 })();
 /* ---- self-update: if a newer build is live, refresh into it once (kills stale-cache problems for good) ---- */
-const GAME_VER='2026.11.04.5';
+const GAME_VER='2026.11.04.6';
 fetch('version.txt',{cache:'no-store'}).then(r=>r.text()).then(t=>{ t=(t||'').trim(); if(t && t!==GAME_VER && sessionStorage.getItem('rl_upd')!==t){ sessionStorage.setItem('rl_upd', t); location.reload(); } }).catch(()=>{});
 
 /* ---- 60fps render loop: glides fighters to their logic targets so movement is smooth, not steppy ---- */
@@ -1222,14 +1234,14 @@ function frameLoop(ts){
   S.party.forEach((id,idx)=>{
     if(RX[id]==null) RX[id]=(PX[id]!=null?PX[id]:heroHome(idx));
     const tgt=(PX[id]!=null?PX[id]:RX[id]);
-    RX[id]=moveToward(RX[id], tgt, 55*dtF);
+    RX[id]=moveToward(RX[id], tgt, 72*dtF);
     const el=document.getElementById('f-'+id);
     if(el){ el.style.left=RX[id]+'%'; el.classList.toggle('walking', Math.abs(tgt-RX[id])>1.2 && B[id]>0); }
   });
   E.forEach((e,i)=>{
-    if(e.x==null) e.x=106;
+    if(e.x==null) e.x=102;
     const tgt=(e.tx!=null? e.tx : e.x);
-    e.x=moveToward(e.x, tgt, 48*dtF);
+    e.x=moveToward(e.x, tgt, 64*dtF);
     const el=document.getElementById('f-e'+i);
     if(el){ el.style.left=e.x+'%'; el.classList.toggle('walking', Math.abs(tgt-e.x)>1.2 && e.hp>0); }
   });

@@ -313,36 +313,36 @@
   <button class="btn" id="startBtn" style="width:100%;padding:13px;font-size:16px">Start the Hunt</button>
 </div>
 
-<script src="art-1.js"></script>
-<script src="art-2.js"></script>
-<script src="art-3.js"></script>
-<script src="art-4.js"></script>
-<script src="art-5.js"></script>
-<script src="art-6.js"></script>
-<script src="artf-1.js"></script>
-<script src="artf-2.js"></script>
-<script src="artf-3.js"></script>
-<script src="artf-4.js"></script>
-<script src="artf-5.js"></script>
-<script src="artf-6.js"></script>
-<script src="artf-7.js"></script>
-<script src="artf-8.js"></script>
-<script src="artf-9.js"></script>
-<script src="artf-10.js"></script>
-<script src="artf-11.js"></script>
-<script src="artf-12.js"></script>
-<script src="artf-13.js"></script>
-<script src="artf-14.js"></script>
-<script src="artf-15.js"></script>
-<script src="artf-16.js"></script>
-<script src="artf-17.js"></script>
-<script src="artf-18.js"></script>
-<script src="artf-19.js"></script>
-<script src="artf-20.js"></script>
-<script src="artf-21.js"></script>
-<script src="artf-22.js"></script>
-<script src="artf-23.js"></script>
-<script src="artf-24.js"></script>
+<script src="art-1.js?v=3"></script>
+<script src="art-2.js?v=3"></script>
+<script src="art-3.js?v=3"></script>
+<script src="art-4.js?v=3"></script>
+<script src="art-5.js?v=3"></script>
+<script src="art-6.js?v=3"></script>
+<script src="artf-1.js?v=3"></script>
+<script src="artf-2.js?v=3"></script>
+<script src="artf-3.js?v=3"></script>
+<script src="artf-4.js?v=3"></script>
+<script src="artf-5.js?v=3"></script>
+<script src="artf-6.js?v=3"></script>
+<script src="artf-7.js?v=3"></script>
+<script src="artf-8.js?v=3"></script>
+<script src="artf-9.js?v=3"></script>
+<script src="artf-10.js?v=3"></script>
+<script src="artf-11.js?v=3"></script>
+<script src="artf-12.js?v=3"></script>
+<script src="artf-13.js?v=3"></script>
+<script src="artf-14.js?v=3"></script>
+<script src="artf-15.js?v=3"></script>
+<script src="artf-16.js?v=3"></script>
+<script src="artf-17.js?v=3"></script>
+<script src="artf-18.js?v=3"></script>
+<script src="artf-19.js?v=3"></script>
+<script src="artf-20.js?v=3"></script>
+<script src="artf-21.js?v=3"></script>
+<script src="artf-22.js?v=3"></script>
+<script src="artf-23.js?v=3"></script>
+<script src="artf-24.js?v=3"></script>
 <script>
 /* ================= REALLOOT — original auto-battler loot RPG ================= */
 const $=s=>document.querySelector(s);
@@ -1103,6 +1103,10 @@ function offlineGains(){
   if(!S.sel) S.sel=S.party[0];
   ensureGoals(); spawnEnemies(); renderAll(); offlineGains(); save();
 })();
+/* ---- self-update: if a newer build is live, refresh into it once (kills stale-cache problems for good) ---- */
+const GAME_VER='2026.11.04.3';
+fetch('version.txt',{cache:'no-store'}).then(r=>r.text()).then(t=>{ t=(t||'').trim(); if(t && t!==GAME_VER && sessionStorage.getItem('rl_upd')!==t){ sessionStorage.setItem('rl_upd', t); location.reload(); } }).catch(()=>{});
+
 setInterval(()=>{ if(S && S.started) combatTick(0.1*((S.mods && S.mods.turbo)?4:(S.settings.speed||1))); },100);
 setInterval(()=>{ if(S && S.started) save(); },5000);
 window.addEventListener('beforeunload', save);

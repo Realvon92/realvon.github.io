@@ -78,12 +78,30 @@
   @keyframes lungeR{ 50%{ transform:translate(calc(-50% + 14px),0);} } @keyframes lungeL{ 50%{ transform:translate(calc(-50% - 14px),0);} }
   .fighter.walking .figimg, .fighter.walking .av{ animation:walkBob .3s linear infinite; }
   @keyframes walkBob{ 0%,100%{ transform:translateY(0) rotate(-2.5deg);} 50%{ transform:translateY(-5px) rotate(2.5deg);} }
-  .proj{ position:absolute; bottom:66px; width:12px; height:12px; border-radius:50%; z-index:6; pointer-events:none; transform:translate(-50%,0); transition:left .22s linear; }
+  .proj{ position:absolute; bottom:66px; width:12px; height:12px; border-radius:50%; z-index:6; pointer-events:none; transform:translate(-50%,0); transition:left .16s linear; }
   .proj.arrow{ width:17px; height:4px; border-radius:2px; }
   #scene.shake{ animation:shk .32s; } #scene.shakeBig{ animation:shk .55s; }
   @keyframes shk{ 20%{ transform:translate(-3px,1px);} 40%{ transform:translate(3px,-2px);} 60%{ transform:translate(-2px,1px);} 80%{ transform:translate(2px,0);} }
   .spark{ position:absolute; bottom:58px; width:7px; height:7px; border-radius:50%; pointer-events:none; z-index:7; }
   .chestfx{ position:absolute; bottom:56px; font-size:30px; z-index:7; pointer-events:none; transform:translateX(-50%); animation:chestFall .85s ease-in forwards; }
+  .ultbar{ height:4px; background:#000c; border:1px solid #000; border-radius:2px; overflow:hidden; margin-top:2px; }
+  .ultfill{ height:100%; background:linear-gradient(90deg,#ffb300,#ffd700); width:0%; transition:width .2s; }
+  .fighter.ultready .figimg, .fighter.ultready .av{ filter:drop-shadow(0 0 9px #ffd700); }
+  .fighter.enraged .figimg, .fighter.enraged .av{ filter:drop-shadow(0 0 11px #e5484d); }
+  #ultBanner{ position:absolute; top:36%; left:0; right:0; text-align:center; z-index:8; pointer-events:none; opacity:0; }
+  #ultBanner .un{ font-size:13px; color:#fff; letter-spacing:2px; text-shadow:0 2px 4px #000; }
+  #ultBanner .uu{ font-size:26px; font-weight:bold; color:var(--gold); text-shadow:0 0 14px #ffb300, 0 2px 4px #000; letter-spacing:1px; }
+  #ultBanner.pop{ animation:ultPop 1.6s ease forwards; }
+  @keyframes ultPop{ 0%{ opacity:0; transform:scale(.8);} 12%{ opacity:1; transform:scale(1.06);} 20%{ transform:scale(1);} 78%{ opacity:1;} 100%{ opacity:0; transform:scale(1.02);} }
+  #amb{ position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+  .ambp{ position:absolute; border-radius:50%; pointer-events:none; top:-14px; }
+  .amb1{ background:#ffb35c; box-shadow:0 0 6px #ff8c1a; animation:ambRise linear infinite; }
+  .amb2{ background:#9ad1ff; width:2px !important; height:12px !important; border-radius:2px; opacity:.5; animation:ambFall linear infinite; }
+  .amb3{ background:#fff; opacity:.85; animation:ambFall linear infinite; }
+  .amb4{ background:#b8a67e; opacity:.6; animation:ambDrift linear infinite; }
+  @keyframes ambFall{ from{ transform:translateY(-16px);} to{ transform:translateY(300px);} }
+  @keyframes ambRise{ from{ transform:translateY(300px);} to{ transform:translateY(-16px);} }
+  @keyframes ambDrift{ from{ transform:translate(0,300px);} to{ transform:translate(-34px,-16px);} }
   @keyframes chestFall{ 0%{ margin-bottom:110px; opacity:0; } 25%{ opacity:1; } 70%{ margin-bottom:0; } 85%{ margin-bottom:14px; } 100%{ margin-bottom:4px; opacity:0; } }
   .fighter.hitflash .av{ animation:hitf .18s; } @keyframes hitf{ 50%{ filter:brightness(2.4);} }
   .dmg{ position:absolute; left:50%; top:-4px; transform:translateX(-50%); font-weight:bold; font-size:15px; color:#ffe9a8;
@@ -198,8 +216,10 @@
       <div id="zonetabs"></div>
       <div id="stageNav"><button id="stPrev">◀</button><span id="killInfo">Kills 0/5</span><button id="stNext">▶</button></div>
       <div id="bossbar"><div class="bl">BOSS</div><div class="bt"><div id="bossfill"></div></div></div>
+      <div id="amb"></div>
       <div id="scenery"></div>
       <div id="field"><div class="side" id="heroSide"></div><div class="side" id="enemySide"></div></div>
+      <div id="ultBanner"></div>
     </div>
 
     <div class="sec" id="loopSec" style="display:none;padding-bottom:0">
@@ -275,7 +295,8 @@
   </div></div>
 
   <div id="panel-goals" class="panel"><div class="sec">
-    <h3>GOALS</h3><div id="goalList"></div>
+    <h3>DAILY — RESETS AT MIDNIGHT</h3><div id="dailyBox"></div>
+    <h3 style="margin-top:14px">GOALS</h3><div id="goalList"></div>
     <h3 style="margin-top:14px">FEATS</h3><div id="featList"></div>
   </div></div>
 
@@ -435,7 +456,7 @@ function defaultState(){
     zone:1, stage:1, killsThisStage:0, progress:{1:1}, unlockedZones:1, clearedZones:[], loop:0, maxLoop:0,
     heroes:{}, owned:[], party:[], sel:null,
     bag:[], counters:{kills:0,chests:0,goldEarned:0,sold:0,bosses:0,recruits:0},
-    goals:[], feats:{}, settings:{speed:1, autoOpen:false, autoSell:false, sound:true, haptics:true},
+    goals:[], feats:{}, daily:{day:'', claimed:false, quests:[]}, settings:{speed:1, autoOpen:false, autoSell:false, sound:true, haptics:true},
     mods:{rich:false, onehit:false, god:false, rain:false, luck:false, boost:false, recruit:false, turbo:false},
     lastSeen:Date.now()
   };
@@ -540,7 +561,8 @@ let healTimers={};
 let lastAutoOpen=0, rainT=0;
 
 /* ---- battle movement: fighters walk to their targets, ranged units fire projectiles ---- */
-let PX={};               /* live battle x-position (%) per hero id */
+let PX={};               /* battle x TARGET (%) per hero id */
+let RX={};               /* battle x RENDERED (%) per hero id — glides at 60fps */
 const RANGED_CLS={Ranger:1,Sorcerer:1,Druid:1,Cleric:1};
 const RANGED_E={witch:1,cultist:1,herald:1,drake:1,harpy:1,boss2:1,boss3:1};
 const PROJ_COLOR={Ranger:'#ffd76a',Sorcerer:'#c07bff',Druid:'#6fe08a',Cleric:'#ffe9a8',witch:'#c07bff',cultist:'#ff9d5c',herald:'#9ad1ff',drake:'#9ad1ff',harpy:'#e8f4ff',boss2:'#6fe08a',boss3:'#9ad1ff'};
@@ -551,7 +573,7 @@ function shootProj(x1, x2, color, arrow){
   const f=document.getElementById('field'); if(!f) return;
   const p=document.createElement('div'); p.className='proj'+(arrow?' arrow':''); p.style.left=x1+'%'; p.style.background=color; p.style.boxShadow='0 0 9px 2px '+color; f.appendChild(p);
   requestAnimationFrame(()=>{ requestAnimationFrame(()=>{ p.style.left=x2+'%'; }); });
-  setTimeout(()=>p.remove(), 300);
+  setTimeout(()=>p.remove(), 240);
 }
 
 /* ---- sound + feel (Phase 2): tiny synthesized SFX, haptics, shake, particles ---- */
@@ -586,25 +608,54 @@ function burst(x, color){
     an.onfinish=()=>s.remove(); }
 }
 function chestDropFx(x){ const f=document.getElementById('field'); if(!f) return; const d=document.createElement('div'); d.className='chestfx'; d.textContent='🧰'; d.style.left=(x==null?88:x)+'%'; f.appendChild(d); setTimeout(()=>d.remove(), 900); }
+/* ---- hero ultimates (Phase 3): meter charges on attacks and hits taken, auto-casts at full ---- */
+let ULT={};
+function healHero(id, amt){ if(B[id]<=0) return; const mx=heroStats(id).hp, real=Math.min(mx-B[id], amt); if(real>0){ B[id]+=real; floater(id,'+'+real,'heal'); } }
+function ultDamage(ti, d, gen){
+  if(E!==gen) return 0;
+  const e=E[ti]; if(!e || e.hp<=0) return 0;
+  e.hp-=d; hitFlash('e'+ti); floater('e'+ti, d, 'crit'); burst(e.x, '#ffd700');
+  if(e.hp<=0) killEnemy(ti); else updateBars();
+  return d;
+}
+const ULTS={
+  Knight:{ n:'AEGIS SLAM', fn:(id,st,gen)=>{ const ti=E.findIndex(e=>e.hp>0); if(ti>=0) ultDamage(ti, Math.round(st.atk*3.0), gen); healHero(id, Math.round(heroStats(id).hp*0.10)); } },
+  Rogue:{ n:'SHADOWSTRIKE', fn:(id,st,gen)=>{ const ti=E.findIndex(e=>e.hp>0); if(ti>=0) ultDamage(ti, Math.round(st.atk*4.2), gen); } },
+  Ranger:{ n:'ARROW STORM', fn:(id,st,gen)=>{ E.slice().forEach((e,i)=>{ if(e.hp>0) ultDamage(i, Math.round(st.atk*1.6), gen); }); } },
+  Cleric:{ n:'RADIANT RENEWAL', fn:(id,st,gen)=>{ S.party.forEach(h=>healHero(h, Math.round(heroStats(h).hp*0.35))); sHeal(); } },
+  Sorcerer:{ n:'METEOR', fn:(id,st,gen)=>{ E.slice().forEach((e,i)=>{ if(e.hp>0) ultDamage(i, Math.round(st.atk*2.8), gen); }); } },
+  Berserker:{ n:'BLOODRAGE', fn:(id,st,gen)=>{ const ti=E.findIndex(e=>e.hp>0); if(ti>=0){ const dealt=ultDamage(ti, Math.round(st.atk*3.5), gen); healHero(id, dealt); } } },
+  Druid:{ n:'WILD RENEWAL', fn:(id,st,gen)=>{ S.party.forEach(h=>healHero(h, Math.round(heroStats(h).hp*0.25))); E.slice().forEach((e,i)=>{ if(e.hp>0) ultDamage(i, Math.round(st.atk*1.2), gen); }); } }
+};
+function castUlt(id, st){
+  const h=HERO_BY_ID[id], u=ULTS[h.cls]; if(!u) return;
+  const b=document.getElementById('ultBanner');
+  if(b){ b.innerHTML='<div class="un">'+h.name.toUpperCase()+'</div><div class="uu">✦ '+u.n+' ✦</div>'; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); }
+  tone(300,900,0.25,'sawtooth',0.05); tone(600,1200,0.3,'triangle',0.04,0.05); buzz(25); shakeScene(false);
+  u.fn(id, st, E);
+  updateBars();
+}
+function updateUltBars(){
+  S.party.forEach(id=>{ const fw=document.getElementById('f-'+id); if(!fw) return; const f=fw.querySelector('.ultfill'); if(f) f.style.width=(ULT[id]||0)+'%'; fw.classList.toggle('ultready', (ULT[id]||0)>=100); });
+}
+function frontHeroRX(){ let m=null; S.party.forEach(id=>{ if(B[id]>0 && RX[id]!=null) m=(m==null?RX[id]:Math.max(m,RX[id])); }); return m; }
 function movePhase(dt){
+  /* logic sets TARGETS only — the 60fps frame loop glides fighters to them */
   const foe=E.find(e=>e.hp>0) || null;
   S.party.forEach((id,idx)=>{
-    const el=document.getElementById('f-'+id); if(PX[id]==null) PX[id]=heroHome(idx);
-    if(B[id]<=0){ if(el) el.classList.remove('walking'); return; }
+    if(PX[id]==null) PX[id]=heroHome(idx);
+    if(B[id]<=0) return;
     let want=heroHome(idx);
     if(foe && foe.x!=null) want=Math.max(5, Math.min(88, foe.x - (RANGED_CLS[HERO_BY_ID[id].cls]?36:14)));
-    PX[id]=moveToward(PX[id], want, 30*dt);
-    if(el){ el.style.left=PX[id]+'%'; el.classList.toggle('walking', Math.abs(want-PX[id])>0.6); }
+    PX[id]=want;
   });
-  const fx=frontHeroX();
+  const fx=frontHeroRX();
   E.forEach((e,i)=>{
     if(e.x==null) e.x=106;
-    const el=document.getElementById('f-e'+i);
-    if(e.hp<=0){ if(el) el.classList.remove('walking'); return; }
+    if(e.hp<=0) return;
     let want=(e.home!=null? e.home : 88);
     if(fx!=null) want=Math.max(14, Math.min(96, fx + (RANGED_E[e.art]?36:14)));
-    e.x=moveToward(e.x, want, 26*dt);
-    if(el){ el.style.left=e.x+'%'; el.classList.toggle('walking', Math.abs(want-e.x)>0.6); }
+    e.tx=want;
   });
 }
 
@@ -627,7 +678,7 @@ function spawnEnemies(){
     const n=(S.stage>=10 && Math.random()<0.6)?2:1;
     for(let i=0;i<n;i++) E.push(mk(pickA(z.enemies),false,elite&&i===0));
   }
-  timers={}; E.forEach((e,i)=>{ timers['e'+i]=rnd(0.4,1.2); e.x=106; e.home=e.boss?84:(88-i*11); });
+  timers={}; E.forEach((e,i)=>{ timers['e'+i]=rnd(0.4,1.2); e.x=106; e.home=e.boss?84:(88-i*11); e.tx=e.home; });
   buildScene(); updateBars();
 }
 function aliveHeroes(){ return S.party.filter(id=>B[id]>0); }
@@ -653,35 +704,43 @@ function combatTick(dt){
       const ti=E.findIndex(e=>e.hp>0); if(ti<0) return;
       const e=E[ti];
       const ranged=!!RANGED_CLS[base.cls];
-      if(e.x!=null && PX[id]!=null && (e.x-PX[id]) > (ranged?38:15.5)) return;   /* still walking into range */
+      const hxr=(RX[id]==null? PX[id] : RX[id]);
+      if(e.x!=null && hxr!=null && (e.x-hxr) > (ranged?38:15.5)) return;   /* still walking into range */
       timers[id]=0;
       const crit=Math.random()*100<st.crit;
       let d=dmgCalc(st.atk, e.def); if(crit) d=Math.round(d*1.8);
       if(st.ig) d+=Math.round(d*st.ig/100);
       if(S.mods && S.mods.onehit) d=e.hp;
       e.hp-=d;
-      if(ranged){ sShoot(); shootProj(PX[id]+4, e.x-3, PROJ_COLOR[base.cls]||'#ffe9a8', base.cls==='Ranger'); const dd=d, cc=crit, er=e; setTimeout(()=>{ if(E[ti]===er){ hitFlash('e'+ti); floater('e'+ti, dd, cc?'crit':''); } },180); }
+      if(ranged){ sShoot(); shootProj(hxr+4, e.x-3, PROJ_COLOR[base.cls]||'#ffe9a8', base.cls==='Ranger'); const dd=d, cc=crit, er=e; setTimeout(()=>{ if(E[ti]===er){ hitFlash('e'+ti); floater('e'+ti, dd, cc?'crit':''); } },130); }
       else { if(crit){ sCrit(); buzz(15); } else sHit(); lunge(id,'lungeR'); hitFlash('e'+ti); floater('e'+ti, d, crit?'crit':''); }
       if(st.ls && B[id]>0){ const h=Math.round(d*st.ls/100); if(h>0) B[id]=Math.min(heroStats(id).hp, B[id]+h); }
-      if(e.hp<=0) killEnemy(ti); else updateBars();
+      if(e.hp<=0){ killEnemy(ti); }
+      else{
+        ULT[id]=Math.min(100,(ULT[id]||0)+11);
+        if(ULT[id]>=100 && B[id]>0){ ULT[id]=0; castUlt(id, st); }
+        else updateBars();
+        updateUltBars();
+      }
     }
   });
   /* enemies act */
   E.forEach((e,i)=>{
     if(e.hp<=0) return;
+    if(e.boss && !e._enr && e.hp<e.maxHp*0.3){ e._enr=true; toast('⚠️ '+e.name+' is ENRAGED!'); sCrit(); shakeScene(false); }
     timers['e'+i]=(timers['e'+i]||0)+dt;
-    if(timers['e'+i]>=2.0){
+    if(timers['e'+i]>=(e._enr?1.25:2.0)){
       const alive=aliveHeroes(); if(!alive.length) return;
-      const fx=frontHeroX(); if(fx==null) return;
+      const fxr=frontHeroRX(); const fx=(fxr!=null? fxr : frontHeroX()); if(fx==null) return;
       const eranged=!!RANGED_E[e.art];
       if(e.x!=null && (e.x-fx) > (eranged?38:15.5)) return;   /* still advancing on the party */
       timers['e'+i]=0;
       const tid=pickA(alive), st=heroStats(tid);
       if(S.mods && S.mods.god){ if(eranged) shootProj(e.x-4, fx+3, PROJ_COLOR[e.art]||'#ff9d5c', false); else lunge('e'+i,'lungeL'); floater(tid,'BLOCKED','heal'); updateBars(); }
       else{
-        const d=dmgCalc(e.atk, st.def);
-        B[tid]-=d;
-        if(eranged){ shootProj(e.x-4, (PX[tid]==null?fx:PX[tid])+3, PROJ_COLOR[e.art]||'#ff9d5c', false); const dd=d; setTimeout(()=>{ hitFlash(tid); floater(tid,'-'+dd,'hurt'); sHurt(); },180); }
+        const d=dmgCalc(Math.round(e.atk*(e._enr?1.25:1)), st.def);
+        B[tid]-=d; ULT[tid]=Math.min(100,(ULT[tid]||0)+6); updateUltBars();
+        if(eranged){ shootProj(e.x-4, ((RX[tid]==null?PX[tid]:RX[tid])==null?fx:(RX[tid]==null?PX[tid]:RX[tid]))+3, PROJ_COLOR[e.art]||'#ff9d5c', false); const dd=d; setTimeout(()=>{ hitFlash(tid); floater(tid,'-'+dd,'hurt'); sHurt(); },130); }
         else { sHurt(); lunge('e'+i,'lungeL'); hitFlash(tid); floater(tid,'-'+d,'hurt'); }
         if(st.th && e.hp>1){ const rf=Math.min(e.hp-1, Math.round(d*st.th/100)); if(rf>0){ e.hp-=rf; floater('e'+i,'🌵'+rf,''); } }
         if(B[tid]<=0){ B[tid]=0; toast(HERO_BY_ID[tid].name+' is down!'); shakeScene(false); buzz(70); }
@@ -881,29 +940,31 @@ function fighterHTML(key, icon, name, frac, isEnemy, downed, artKey, x){
   if(fimg){ let s=0; for(let i=0;i<fk.length;i++) s+=fk.charCodeAt(i); const dl=-((s%18)/8).toFixed(2);
     return '<div class="fighter '+(isEnemy?'enemy':'')+(downed?' downed':'')+'" id="f-'+key+'"'+lp+'>'+
     '<div class="figwrap'+(fk.indexOf('boss')===0?' boss':'')+'"><img class="figimg" src="'+fimg+'" style="animation-delay:'+dl+'s" alt=""></div><div class="nm">'+name+'</div>'+
-    '<div class="hpbar"><div class="hpfill" style="width:'+Math.max(0,frac*100)+'%"></div></div></div>'; }
+    '<div class="hpbar"><div class="hpfill" style="width:'+Math.max(0,frac*100)+'%"></div></div>'+(isEnemy?'':'<div class="ultbar"><div class="ultfill"></div></div>')+'</div>'; }
   const img=artImg(artKey);
   return '<div class="fighter '+(isEnemy?'enemy':'')+(downed?' downed':'')+'" id="f-'+key+'"'+lp+'>'+
     '<div class="av'+(img?' hasimg':'')+'">'+(img||icon)+'</div><div class="nm">'+name+'</div>'+
-    '<div class="hpbar"><div class="hpfill" style="width:'+Math.max(0,frac*100)+'%"></div></div></div>';
+    '<div class="hpbar"><div class="hpfill" style="width:'+Math.max(0,frac*100)+'%"></div></div>'+(isEnemy?'':'<div class="ultbar"><div class="ultfill"></div></div>')+'</div>';
 }
 function buildScene(){
   const z=ZONES[S.zone-1];
   $('#scene').className=''; $('#scene').id='scene'; $('#scene').classList.add('z'+S.zone);
   $('#scenery').innerHTML=(z.scenery||[]).map(s=>'<span>'+s+'</span>').join('');
+  const amb=$('#amb'); if(amb){ let ah=''; for(let i=0;i<14;i++){ const sz=(2+Math.random()*3).toFixed(0); ah+='<span class="ambp amb'+S.zone+'" style="left:'+(Math.random()*98).toFixed(1)+'%; width:'+sz+'px; height:'+sz+'px; animation-duration:'+(3+Math.random()*5).toFixed(1)+'s; animation-delay:-'+(Math.random()*6).toFixed(1)+'s"></span>'; } amb.innerHTML=ah; }
   $('#stageBanner .zname').textContent=z.name;
   $('#stageBanner .sname').textContent=(isBossStage()? 'Stage '+S.stage+' of '+z.stages+' — BOSS' : 'Stage '+S.stage+' of '+z.stages)+((S.loop||0)>0? ' · ♾️ Loop '+S.loop : '');
   $('#killInfo').textContent=isBossStage()? 'Boss fight!' : 'Kills '+S.killsThisStage+'/5';
   const zt=$('#zonetabs'); zt.innerHTML='';
   for(let i=1;i<=S.unlockedZones;i++){ const b=document.createElement('button'); b.textContent='Z'+i+' '+ZONES[i-1].name.split(' ')[0]; if(i===S.zone)b.className='on'; b.onclick=()=>{ S.zone=i; S.stage=S.progress[i]||1; S.killsThisStage=0; spawnEnemies(); renderAll(); save(); }; zt.appendChild(b); }
   $('#bossbar').style.display=isBossStage()? 'block':'none';
-  $('#heroSide').innerHTML=S.party.map((id,hi)=>{ const hs=heroStats(id); const cur=(B[id]==null?hs.hp:B[id]); if(PX[id]==null) PX[id]=heroHome(hi); return fighterHTML(id, HERO_BY_ID[id].icon, HERO_BY_ID[id].name, cur/hs.hp, false, B[id]<=0, 'hero-'+id, PX[id]); }).join('');
+  $('#heroSide').innerHTML=S.party.map((id,hi)=>{ const hs=heroStats(id); const cur=(B[id]==null?hs.hp:B[id]); if(PX[id]==null) PX[id]=heroHome(hi); return fighterHTML(id, HERO_BY_ID[id].icon, HERO_BY_ID[id].name, cur/hs.hp, false, B[id]<=0, 'hero-'+id, RX[id]==null?PX[id]:RX[id]); }).join('');
   $('#enemySide').innerHTML=E.map((e,i)=>fighterHTML('e'+i, e.icon, e.name+(e.elite?' ★':''), e.hp/e.maxHp, true, e.hp<=0, e.art, e.x==null?92:e.x)).join('');
 }
 function updateBars(){
   S.party.forEach(id=>{ const el=document.querySelector('#f-'+CSS.escape(id)+' .hpfill'); if(el){ const hs=heroStats(id); el.style.width=Math.max(0,(B[id]||0)/hs.hp*100)+'%'; } const f=$('#f-'+CSS.escape(id)); if(f) f.classList.toggle('downed', B[id]<=0); });
   E.forEach((e,i)=>{ const el=document.querySelector('#f-e'+i+' .hpfill'); if(el) el.style.width=Math.max(0,e.hp/e.maxHp*100)+'%'; });
-  if(isBossStage() && E[0]) $('#bossfill').style.width=Math.max(0,E[0].hp/E[0].maxHp*100)+'%';
+  if(isBossStage() && E[0]){ $('#bossfill').style.width=Math.max(0,E[0].hp/E[0].maxHp*100)+'%'; const bf=document.getElementById('f-e0'); if(bf) bf.classList.toggle('enraged', !!E[0]._enr); }
+  updateUltBars();
   $('#killInfo').textContent=isBossStage()? 'Boss fight!' : 'Kills '+S.killsThisStage+'/5';
 }
 function floater(key, txt, cls){
@@ -992,8 +1053,53 @@ function renderTrain(){
     tl.appendChild(d);
   });
 }
+/* ---- daily rewards + daily quests (Phase 3): a reason to come back every day ---- */
+const DAILY_TEMPLATES=[
+  {key:'kills', target:25, label:'Slay 25 enemies today', reward:{chests:1}},
+  {key:'chests', target:5, label:'Open 5 chests today', reward:{gems:6}},
+  {key:'goldEarned', target:15000, label:'Earn 15,000 gold today', reward:{chests:1}},
+  {key:'bosses', target:2, label:'Down 2 bosses today', reward:{shards:10}},
+  {key:'sold', target:8, label:'Sell 8 items today', reward:{gems:4}}
+];
+function todayStr(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function ensureDaily(){
+  if(!S.daily) S.daily={day:'', claimed:false, quests:[]};
+  const t=todayStr();
+  if(S.daily.day!==t){
+    S.daily.day=t; S.daily.claimed=false;
+    const pool=DAILY_TEMPLATES.slice(); S.daily.quests=[];
+    for(let i=0;i<3 && pool.length;i++){ const tpl=pool.splice(Math.floor(Math.random()*pool.length),1)[0]; S.daily.quests.push({key:tpl.key, target:tpl.target, start:S.counters[tpl.key]||0, label:tpl.label, reward:tpl.reward, claimed:false}); }
+  }
+}
+function dailyProgress(q){ return Math.min(q.target, (S.counters[q.key]||0)-q.start); }
+function claimDaily(){
+  ensureDaily(); if(S.daily.claimed) return;
+  S.daily.claimed=true; S.chests+=2; S.shards+=15; gainGold(2500);
+  sChest(); toast('Daily reward claimed: 🧰 +2 · 🧩 +15 · 🪙 +2,500'); renderAll(); save();
+}
+function claimDailyQuest(ix){
+  const q=S.daily.quests[ix]; if(!q || q.claimed || dailyProgress(q)<q.target) return;
+  q.claimed=true; const r=q.reward;
+  if(r.gold) gainGold(r.gold); if(r.chests) S.chests+=r.chests; if(r.gems) S.gems+=r.gems; if(r.shards) S.shards+=r.shards;
+  toast('Daily quest claimed!'); renderAll(); save();
+}
+function renderDaily(){
+  ensureDaily();
+  const db=$('#dailyBox'); if(!db) return; db.innerHTML='';
+  const dc=document.createElement('div'); dc.className='card goalRow';
+  dc.innerHTML='<div class="inf"><div>🎁 Daily Reward</div><div class="rew">🧰 +2 chests · 🧩 +15 shards · 🪙 +2,500 gold</div></div>'+(S.daily.claimed? '<span style="color:var(--dim);font-size:12px">Claimed ✓</span>':'<button class="btn small">Claim</button>');
+  if(!S.daily.claimed) dc.querySelector('button').onclick=claimDaily;
+  db.appendChild(dc);
+  S.daily.quests.forEach((q,ix)=>{
+    const p=dailyProgress(q), done=p>=q.target;
+    const d=document.createElement('div'); d.className='card goalRow';
+    d.innerHTML='<div class="inf"><div>'+q.label+'</div><div class="rew">'+rewardText(q.reward)+'</div><div class="prog"><i style="width:'+Math.min(100,p/q.target*100)+'%"></i></div><div style="font-size:11px;color:var(--dim)">'+fmt(p)+' / '+fmt(q.target)+'</div></div>'+(q.claimed? '<span style="color:var(--dim);font-size:12px">Claimed ✓</span>' : done? '<button class="btn small">Claim</button>':'');
+    if(done && !q.claimed) d.querySelector('button').onclick=()=>claimDailyQuest(ix);
+    db.appendChild(d);
+  });
+}
 function renderGoals(){
-  ensureGoals();
+  ensureGoals(); renderDaily();
   const gl=$('#goalList'); gl.innerHTML='';
   S.goals.forEach((g,ix)=>{
     const p=goalProgress(g), done=p>=g.target;
@@ -1104,8 +1210,31 @@ function offlineGains(){
   ensureGoals(); spawnEnemies(); renderAll(); offlineGains(); save();
 })();
 /* ---- self-update: if a newer build is live, refresh into it once (kills stale-cache problems for good) ---- */
-const GAME_VER='2026.11.04.3';
+const GAME_VER='2026.11.04.5';
 fetch('version.txt',{cache:'no-store'}).then(r=>r.text()).then(t=>{ t=(t||'').trim(); if(t && t!==GAME_VER && sessionStorage.getItem('rl_upd')!==t){ sessionStorage.setItem('rl_upd', t); location.reload(); } }).catch(()=>{});
+
+/* ---- 60fps render loop: glides fighters to their logic targets so movement is smooth, not steppy ---- */
+let lastFrame=0;
+function frameLoop(ts){
+  requestAnimationFrame(frameLoop);
+  if(!S || !S.started) return;
+  const dtF=Math.min(0.05, lastFrame? (ts-lastFrame)/1000 : 0.016); lastFrame=ts;
+  S.party.forEach((id,idx)=>{
+    if(RX[id]==null) RX[id]=(PX[id]!=null?PX[id]:heroHome(idx));
+    const tgt=(PX[id]!=null?PX[id]:RX[id]);
+    RX[id]=moveToward(RX[id], tgt, 55*dtF);
+    const el=document.getElementById('f-'+id);
+    if(el){ el.style.left=RX[id]+'%'; el.classList.toggle('walking', Math.abs(tgt-RX[id])>1.2 && B[id]>0); }
+  });
+  E.forEach((e,i)=>{
+    if(e.x==null) e.x=106;
+    const tgt=(e.tx!=null? e.tx : e.x);
+    e.x=moveToward(e.x, tgt, 48*dtF);
+    const el=document.getElementById('f-e'+i);
+    if(el){ el.style.left=e.x+'%'; el.classList.toggle('walking', Math.abs(tgt-e.x)>1.2 && e.hp>0); }
+  });
+}
+requestAnimationFrame(frameLoop);
 
 setInterval(()=>{ if(S && S.started) combatTick(0.1*((S.mods && S.mods.turbo)?4:(S.settings.speed||1))); },100);
 setInterval(()=>{ if(S && S.started) save(); },5000);

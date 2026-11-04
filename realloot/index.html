@@ -42,10 +42,12 @@
   #bossbar .bl{ font-size:10px; text-align:center; color:#ffb3b3; text-shadow:0 1px 2px #000; }
   #bossbar .bt{ height:8px; background:#000c; border:1px solid #7a2020; border-radius:4px; overflow:hidden; }
   #bossfill{ height:100%; background:linear-gradient(90deg,#a00,#e5484d); width:100%; }
-  #field{ position:absolute; left:0; right:0; bottom:6px; top:112px; display:flex; justify-content:space-between; padding:0 8px; }
+  #scenery{ position:absolute; left:0; right:0; bottom:70px; display:flex; justify-content:space-around; align-items:flex-end; opacity:.8; pointer-events:none; z-index:1; }
+  #scenery span{ font-size:31px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.55)); }
+  #field{ position:absolute; left:0; right:0; bottom:6px; top:112px; display:flex; justify-content:space-between; padding:0 8px; z-index:2; }
   .side{ display:flex; flex-direction:column; justify-content:flex-end; gap:5px; }
   .fighter{ position:relative; width:86px; text-align:center; }
-  .fighter .av{ width:46px; height:46px; margin:0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:25px;
+  .fighter .av{ width:56px; height:56px; margin:0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px;
     background:radial-gradient(circle at 35% 30%, #4a3520, #241708);
     border:2px solid var(--gold2); box-shadow:0 3px 6px #000c; }
   .fighter.enemy .av{ border-color:#7a2020; }
@@ -169,6 +171,7 @@
       <div id="zonetabs"></div>
       <div id="stageNav"><button id="stPrev">◀</button><span id="killInfo">Kills 0/5</span><button id="stNext">▶</button></div>
       <div id="bossbar"><div class="bl">BOSS</div><div class="bt"><div id="bossfill"></div></div></div>
+      <div id="scenery"></div>
       <div id="field"><div class="side" id="heroSide"></div><div class="side" id="enemySide"></div></div>
     </div>
 
@@ -295,20 +298,20 @@ const SLOT_NAME={weapon:'Weapon',armor:'Armor',helm:'Helm',ring:'Ring',offhand:'
 
 /* ---- heroes: id, display name, class, icon, rarity tier (recruit cost), base stats ---- */
 const HEROES=[
- {id:'cade',   name:'Cade Mercer',        cls:'Knight',    icon:'⚔️', rar:2, atk:52, def:17, hp:215, crit:12, starter:true},
- {id:'zola',   name:'Zola Kane',          cls:'Ranger',    icon:'🏹', rar:2, atk:47, def:12, hp:170, crit:23, starter:true},
- {id:'malik',  name:'Malik "Shade" Osei', cls:'Rogue',     icon:'🗡️', rar:2, atk:50, def:14, hp:185, crit:29, starter:true},
- {id:'priya',  name:'Priya Solenne',      cls:'Cleric',    icon:'✨', rar:1, atk:38, def:13, hp:180, crit:10},
- {id:'ox',     name:'Bruno "Ox" Delgado', cls:'Berserker', icon:'🪓', rar:0, atk:58, def:11, hp:240, crit:14},
- {id:'fern',   name:'Fern Wilder',        cls:'Druid',     icon:'🍃', rar:0, atk:42, def:13, hp:195, crit:12},
- {id:'tilda',  name:'Tilda Sparks',       cls:'Sorcerer',  icon:'🔥', rar:1, atk:60, def:9,  hp:150, crit:20},
- {id:'roland', name:'Roland Vayne',       cls:'Knight',    icon:'🛡️', rar:1, atk:50, def:20, hp:225, crit:10},
- {id:'ivy',    name:'Ivy Quill',          cls:'Rogue',     icon:'🥷', rar:2, atk:56, def:14, hp:180, crit:31},
- {id:'cassian',name:'Cassian Holt',       cls:'Ranger',    icon:'🎯', rar:2, atk:54, def:13, hp:175, crit:26},
- {id:'elba',   name:'Mother Elba',        cls:'Cleric',    icon:'💫', rar:3, atk:46, def:16, hp:215, crit:12},
- {id:'gromm',  name:'Gromm Ashfist',      cls:'Berserker', icon:'🔨', rar:3, atk:70, def:13, hp:265, crit:16},
- {id:'sera',   name:'Seraphine Lux',      cls:'Sorcerer',  icon:'🌟', rar:4, atk:78, def:11, hp:175, crit:24},
- {id:'warden', name:'The Nameless Warden',cls:'Druid',     icon:'🌙', rar:4, atk:64, def:18, hp:250, crit:15}
+ {id:'cade',   name:'Cade Mercer',        cls:'Knight',    icon:'👨🏾', rar:2, atk:52, def:17, hp:215, crit:12, starter:true},
+ {id:'zola',   name:'Zola Kane',          cls:'Ranger',    icon:'👩🏽', rar:2, atk:47, def:12, hp:170, crit:23, starter:true},
+ {id:'malik',  name:'Malik "Shade" Osei', cls:'Rogue',     icon:'🥷', rar:2, atk:50, def:14, hp:185, crit:29, starter:true},
+ {id:'priya',  name:'Priya Solenne',      cls:'Cleric',    icon:'👩🏾', rar:1, atk:38, def:13, hp:180, crit:10},
+ {id:'ox',     name:'Bruno "Ox" Delgado', cls:'Berserker', icon:'🧔🏻', rar:0, atk:58, def:11, hp:240, crit:14},
+ {id:'fern',   name:'Fern Wilder',        cls:'Druid',     icon:'🧝‍♀️', rar:0, atk:42, def:13, hp:195, crit:12},
+ {id:'tilda',  name:'Tilda Sparks',       cls:'Sorcerer',  icon:'🧙‍♀️', rar:1, atk:60, def:9,  hp:150, crit:20},
+ {id:'roland', name:'Roland Vayne',       cls:'Knight',    icon:'🫅', rar:1, atk:50, def:20, hp:225, crit:10},
+ {id:'ivy',    name:'Ivy Quill',          cls:'Rogue',     icon:'🦹‍♀️', rar:2, atk:56, def:14, hp:180, crit:31},
+ {id:'cassian',name:'Cassian Holt',       cls:'Ranger',    icon:'👨🏻', rar:2, atk:54, def:13, hp:175, crit:26},
+ {id:'elba',   name:'Mother Elba',        cls:'Cleric',    icon:'👵🏾', rar:3, atk:46, def:16, hp:215, crit:12},
+ {id:'gromm',  name:'Gromm Ashfist',      cls:'Berserker', icon:'👹', rar:3, atk:70, def:13, hp:265, crit:16},
+ {id:'sera',   name:'Seraphine Lux',      cls:'Sorcerer',  icon:'👸🏽', rar:4, atk:78, def:11, hp:175, crit:24},
+ {id:'warden', name:'The Nameless Warden',cls:'Druid',     icon:'🧙‍♂️', rar:4, atk:64, def:18, hp:250, crit:15}
 ];
 const HERO_BY_ID={}; HEROES.forEach(h=>HERO_BY_ID[h.id]=h);
 const RECRUIT_SHARDS={0:10,1:30,2:80,3:160};
@@ -316,16 +319,16 @@ const RECRUIT_GEMS=120; /* legendary tier (rar 4) */
 
 /* ---- zones: all names original ---- */
 const ZONES=[
- {name:'Ember Road', stages:25, mult:1,   enemies:[
+ {name:'Ember Road', stages:25, mult:1, scenery:['🌲','🪨','🌳','🏕️','🌲'], enemies:[
    {n:'Sootcap Goblin',i:'👺'},{n:'Thornback Boar',i:'🐗'},{n:'Cinder Imp',i:'😈'},{n:'Dust Wraith',i:'👻'},{n:'Gutterfang Rat',i:'🐀'}],
   boss:{n:'Brakk the Gate Troll',i:'🧌'}},
- {name:'Drowned Hollow', stages:25, mult:3.1, enemies:[
+ {name:'Drowned Hollow', stages:25, mult:3.1, scenery:['🌾','🪷','🌿','🐸','🌾'], enemies:[
    {n:'Mire Newt',i:'🦎'},{n:'Bog Witch',i:'🧙‍♀️'},{n:'Sunken Knight',i:'💀'},{n:'Leech Horror',i:'🪱'},{n:'Fen Stalker',i:'🐊'}],
   boss:{n:'Mother Vex of the Mire',i:'🕷️'}},
- {name:'Gloomspire Peaks', stages:25, mult:9, enemies:[
+ {name:'Gloomspire Peaks', stages:25, mult:9, scenery:['⛰️','🌲','🪨','🏔️','🌲'], enemies:[
    {n:'Frost Harpy',i:'🦅'},{n:'Stone Revenant',i:'🗿'},{n:'Rift Cultist',i:'🥷'},{n:'Ashwing Drake',i:'🐲'},{n:'Peak Stalker',i:'🐆'}],
   boss:{n:'Kargath the Sky Tyrant',i:'🦖'}},
- {name:'The Sunken Throne', stages:25, mult:24, enemies:[
+ {name:'The Sunken Throne', stages:25, mult:24, scenery:['🏛️','🗿','🔮','🗿','🏛️'], enemies:[
    {n:'Void Thrall',i:'👁️'},{n:'Gilded Horror',i:'🦑'},{n:'Dread Herald',i:'🦇'},{n:'Throne Revenant',i:'⚰️'},{n:'Abyss Lancer',i:'🦂'}],
   boss:{n:'The Hollow King',i:'👑'}}
 ];
@@ -697,6 +700,7 @@ function fighterHTML(key, icon, name, frac, isEnemy, downed){
 function buildScene(){
   const z=ZONES[S.zone-1];
   $('#scene').className=''; $('#scene').id='scene'; $('#scene').classList.add('z'+S.zone);
+  $('#scenery').innerHTML=(z.scenery||[]).map(s=>'<span>'+s+'</span>').join('');
   $('#stageBanner .zname').textContent=z.name;
   $('#stageBanner .sname').textContent=isBossStage()? 'Stage '+S.stage+' of '+z.stages+' — BOSS' : 'Stage '+S.stage+' of '+z.stages;
   $('#killInfo').textContent=isBossStage()? 'Boss fight!' : 'Kills '+S.killsThisStage+'/5';

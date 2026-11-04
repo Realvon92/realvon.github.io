@@ -10,16 +10,16 @@
     --gold:#f5c542; --gold2:#b8860b; --ink:#0d0a07; --panel:#1a140d; --panel2:#241b10;
     --line:#3a2c17; --txt:#f3e9d2; --dim:#b8a67e; --red:#e5484d; --grn:#58c472;
   }
-  body{ background:#070503; color:var(--txt); font-family:Georgia,'Times New Roman',serif; }
-  #app{ max-width:430px; margin:0 auto; min-height:100vh; background:var(--ink); position:relative; padding-bottom:74px; }
+  body{ background:#070503; color:var(--txt); font-family:Georgia,'Times New Roman',serif; overflow-x:hidden; }
+  #app{ max-width:430px; margin:0 auto; min-height:100vh; background:var(--ink); position:relative; padding-bottom:74px; overflow-x:hidden; }
   button{ font-family:inherit; cursor:pointer; }
   /* ---------- TOP BAR ---------- */
   #topbar{ position:sticky; top:0; z-index:40; background:linear-gradient(#241a0c,#171008); border-bottom:2px solid var(--gold2); padding:7px 10px 6px; }
-  #topbar .row1{ display:flex; justify-content:space-between; align-items:center; gap:6px; }
+  #topbar .row1{ display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap; }
   #acctName{ font-weight:bold; color:var(--gold); font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px; }
   #power{ font-size:12px; color:var(--dim); white-space:nowrap; }
   #power b{ color:#fff; font-size:14px; }
-  .cur{ display:flex; gap:8px; font-size:13px; }
+  .cur{ display:flex; gap:6px; font-size:12px; flex-wrap:wrap; justify-content:flex-end; }
   .cur span{ white-space:nowrap; }
   #xpwrap{ height:7px; background:#000; border:1px solid var(--line); border-radius:4px; margin-top:5px; overflow:hidden; }
   #xpfill{ height:100%; background:linear-gradient(90deg,#7a4fd0,#b45cff); width:0%; transition:width .3s; }

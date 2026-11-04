@@ -209,6 +209,7 @@
         <div class="card" style="flex:1;margin-bottom:0">
           <div><b style="color:var(--gold)">Luck Lv <span id="luckLvl">1</span></b></div>
           <div id="luckOdds" style="font-size:11px;color:var(--dim);margin:3px 0"></div>
+          <div style="font-size:11px;color:var(--gold);margin:2px 0 4px">🛡️ Loot floor: drops never roll below your selected hero's equipped gear.</div>
           <button class="btn small" id="luckBtn">Upgrade</button>
           <label class="tog"><input type="checkbox" id="autoOpenTog"> Auto-open chests</label>
           <label class="tog"><input type="checkbox" id="autoSellTog"> Auto-sell Common loot</label>
@@ -408,7 +409,19 @@ function genItem(){
   else if(slot==='ring'){ st.crit=ri(2,3)+Math.round(rar*1.5); st.atk=Math.round(0.8*m); }
   else if(slot==='offhand'){ st.def=Math.round(1.1*m); st.atk=Math.round(0.6*m); }
   else if(slot==='amulet'){ st.hp=Math.round(6*m); st.crit=ri(1,3)+Math.round(rar); }
-  return {uid:uidC++, slot, rar, ilvl, lvl:1, name:itemName(slot,rar), base:Object.assign({},st), stats:Object.assign({},st)};
+  const it={uid:uidC++, slot, rar, ilvl, lvl:1, name:itemName(slot,rar), base:Object.assign({},st), stats:Object.assign({},st)};
+  /* Loot floor (Von's rule): a drop never rolls below the selected hero's equipped piece in that slot */
+  const lh=S.sel||S.party[0];
+  const cur=(lh && S.heroes[lh])? S.heroes[lh].gear[slot] : null;
+  if(cur){
+    const floor=itemPower(cur.stats), mine=itemPower(it.stats);
+    if(mine<floor){
+      const f=(floor/mine)*rnd(1.0,1.12);
+      ['atk','def','hp'].forEach(k=>{ it.base[k]=Math.round(it.base[k]*f); it.stats[k]=it.base[k]; });
+      it.base.crit=Math.min(it.base.crit+8, Math.round(it.base.crit*Math.sqrt(f))); it.stats.crit=it.base.crit;
+    }
+  }
+  return it;
 }
 function refreshItemStats(it){ const f=Math.pow(1.09, it.lvl-1); SLOTS; ['atk','def','hp','crit'].forEach(k=>{ it.stats[k]=Math.round(it.base[k]*f*10)/10; }); it.powerCache=itemPower(it.stats); }
 function sellValue(it){ return Math.max(2, Math.round(itemPower(it.stats)/5) + it.rar*3 + it.lvl*2); }

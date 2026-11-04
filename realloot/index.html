@@ -598,7 +598,7 @@ function combatTick(dt){
     }
   });
   /* mods: endless purse + chest rain */
-  if(S.mods && S.mods.rich){ S.gold=Math.max(S.gold,9999999); S.essence=Math.max(S.essence,999999); S.gems=Math.max(S.gems,99999); S.shards=Math.max(S.shards,9999); renderTop(); }
+  if(S.mods && S.mods.rich){ S.gold=Math.max(S.gold,100000000); S.essence=Math.max(S.essence,100000000); S.gems=Math.max(S.gems,100000000); S.shards=Math.max(S.shards,100000000); renderTop(); }
   if(S.mods && S.mods.rain){ rainT+=dt; if(rainT>=3){ rainT=0; S.chests++; renderChest(); } }
   /* auto-open */
   if(S.settings.autoOpen && S.chests>0 && Date.now()-lastAutoOpen>1200){ lastAutoOpen=Date.now(); openChest(true); }

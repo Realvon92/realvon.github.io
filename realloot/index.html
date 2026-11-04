@@ -25,7 +25,7 @@
   #xpfill{ height:100%; background:linear-gradient(90deg,#7a4fd0,#b45cff); width:0%; transition:width .3s; }
   #xplabel{ font-size:10px; color:var(--dim); margin-top:2px; }
   /* ---------- SCENE ---------- */
-  #scene{ position:relative; height:254px; overflow:hidden; border-bottom:2px solid var(--gold2);
+  #scene{ position:relative; height:262px; overflow:hidden; border-bottom:2px solid var(--gold2);
     background:linear-gradient(180deg,#2b1a3a 0%,#6e2f4f 34%,#b3541e 58%,#5a3a17 59%,#3d2812 100%); }
   #scene.z2{ background:linear-gradient(180deg,#0e2233 0%,#175263 40%,#2e7d6b 60%,#17351f 61%,#0f2415 100%); }
   #scene.z3{ background:linear-gradient(180deg,#10131f 0%,#2c3550 42%,#57607e 60%,#232733 61%,#14161d 100%); }
@@ -45,8 +45,8 @@
   #scenery{ position:absolute; left:0; right:0; bottom:70px; display:flex; justify-content:space-around; align-items:flex-end; opacity:.8; pointer-events:none; z-index:1; }
   #scenery span{ font-size:31px; filter:drop-shadow(0 3px 3px rgba(0,0,0,.55)); }
   #field{ position:absolute; left:0; right:0; bottom:6px; top:112px; display:flex; justify-content:space-between; padding:0 8px; z-index:2; }
-  .side{ display:flex; flex-direction:column; justify-content:flex-end; gap:5px; }
-  .fighter{ position:relative; width:86px; text-align:center; }
+  .side{ display:flex; flex-direction:row; align-items:flex-end; gap:2px; }
+  .fighter{ position:relative; width:64px; text-align:center; }
   .fighter .av{ width:56px; height:56px; margin:0 auto; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:32px;
     background:radial-gradient(circle at 35% 30%, #4a3520, #241708);
     border:2px solid var(--gold2); box-shadow:0 3px 6px #000c; }
@@ -58,10 +58,11 @@
   .fighter.downed{ opacity:.35; filter:grayscale(1); }
   .fighter .av.hasimg{ width:66px; height:80px; border-radius:12px; overflow:hidden; padding:0; }
   .fighter .av img{ width:100%; height:100%; object-fit:cover; display:block; }
-.figwrap{ width:88px; height:108px; margin:0 auto; display:flex; align-items:flex-end; justify-content:center; }
-.figwrap.boss{ width:110px; height:136px; }
-.figimg{ height:108px; width:auto; max-width:100px; object-fit:contain; filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)); animation:idleBob 2.3s ease-in-out infinite; }
-.figwrap.boss .figimg{ height:136px; max-width:122px; }
+.figwrap{ width:64px; height:92px; margin:0 auto; display:flex; align-items:flex-end; justify-content:center; }
+.figwrap.boss{ width:86px; height:118px; }
+.figimg{ height:92px; width:auto; max-width:66px; object-fit:contain; filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)); animation:idleBob 2.3s ease-in-out infinite; }
+.figwrap.boss .figimg{ height:118px; max-width:88px; }
+.fighter .av{ animation:idleBob 2.6s ease-in-out infinite; }
 .fighter.enemy .figwrap{ transform:scaleX(-1); }
 @keyframes idleBob{ 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-4px) scale(1.012); } }
 .fighter{ animation:enterIn .3s ease; }
@@ -272,7 +273,7 @@
     <label class="card modRow"><div class="inf"><div class="tn">⚔️ One-Hit Kills</div><div class="td">Every hit drops the enemy. Yes, bosses too.</div></div><input type="checkbox" data-mod="onehit"></label>
     <label class="card modRow"><div class="inf"><div class="tn">🛡️ God Mode</div><div class="td">Your party takes no damage.</div></div><input type="checkbox" data-mod="god"></label>
     <label class="card modRow"><div class="inf"><div class="tn">🧰 Chest Rain</div><div class="td">A chest drops from every kill, plus a bonus chest every few seconds.</div></div><input type="checkbox" data-mod="rain"></label>
-    <label class="card modRow"><div class="inf"><div class="tn">🎲 Max Luck</div><div class="td">Chest odds run at max Luck while this is on — Godforged loot in reach.</div></div><input type="checkbox" data-mod="luck"></label>
+    <label class="card modRow"><div class="inf"><div class="tn">🎲 Max Luck</div><div class="td">Chest odds run at Luck 30 or better while this is on — Godforged loot in reach.</div></div><input type="checkbox" data-mod="luck"></label>
     <label class="card modRow"><div class="inf"><div class="tn">🚀 10× Gains</div><div class="td">Gold and hero XP earned are multiplied by 10.</div></div><input type="checkbox" data-mod="boost"></label>
     <label class="card modRow"><div class="inf"><div class="tn">👥 Free Recruits</div><div class="td">Recruit any hero in the collection for free.</div></div><input type="checkbox" data-mod="recruit"></label>
     <label class="card modRow"><div class="inf"><div class="tn">⏩ Turbo Battles</div><div class="td">Fights run at 4× speed.</div></div><input type="checkbox" data-mod="turbo"></label>
@@ -479,21 +480,22 @@ function genItem(){
 }
 function refreshItemStats(it){ const f=Math.pow(1.09, it.lvl-1); SLOTS; ['atk','def','hp','crit'].forEach(k=>{ it.stats[k]=Math.round(it.base[k]*f*10)/10; }); it.powerCache=itemPower(it.stats); }
 function sellValue(it){ return Math.max(2, Math.round(fullPower(it)/5) + it.rar*3 + it.lvl*2); }
-function effLuck(){ if(S.mods && S.mods.luck) return 30; const lh=S.sel||S.party[0]; return Math.min(30, S.luck + (lh? affixSum(lh,'lucky'):0)); }
-function rollRarity(){
+function effLuck(){ const lh=S.sel||S.party[0]; let L=S.luck + (lh? affixSum(lh,'lucky'):0); if(S.mods && S.mods.luck) L=Math.max(L,30); return L; }
+function luckWeights(){
   const L=effLuck(), unlock=[0,2,4,7,11,16,22], factor=[0,6,3.5,2,1.2,0.7,0.35], w=[0,0,0,0,0,0,0];
   let sum=0;
-  for(let i=1;i<=6;i++){ if(L>=unlock[i]){ w[i]=(L-unlock[i]+1)*factor[i]; sum+=w[i]; } }
+  for(let i=1;i<=6;i++){ if(L>=unlock[i]){ const capL=(i<6)? Math.min(L, unlock[i+1]+14) : L; w[i]=(capL-unlock[i]+1)*factor[i]; sum+=w[i]; } }
   w[0]=Math.max(20, 120-sum);
+  return w;
+}
+function rollRarity(){
+  const w=luckWeights();
   let tot=w.reduce((a,b)=>a+b,0), r=Math.random()*tot;
   for(let i=0;i<=6;i++){ r-=w[i]; if(r<=0) return i; }
   return 0;
 }
 function luckOddsText(){
-  const L=effLuck(), unlock=[0,2,4,7,11,16,22], factor=[0,6,3.5,2,1.2,0.7,0.35], w=[0,0,0,0,0,0,0]; let sum=0;
-  for(let i=1;i<=6;i++){ if(L>=unlock[i]){ w[i]=(L-unlock[i]+1)*factor[i]; sum+=w[i]; } }
-  w[0]=Math.max(20,120-sum);
-  const tot=w.reduce((a,b)=>a+b,0);
+  const w=luckWeights(), tot=w.reduce((a,b)=>a+b,0);
   return w.map((x,i)=> x>0? RAR[i].n+' '+Math.round(x/tot*100)+'%':null).filter(Boolean).join(' · ');
 }
 
@@ -833,9 +835,9 @@ function itemModal(it, heroId, slot){
 }
 function renderChest(){
   $('#chestCount').textContent=S.chests;
-  $('#luckLvl').textContent=(S.mods && S.mods.luck)? 'MAX (mod)' : S.luck;
+  $('#luckLvl').textContent=effLuck();
   $('#luckOdds').textContent=luckOddsText();
-  $('#luckBtn').textContent=S.luck>=30? 'MAX' : 'Upgrade · '+fmt(luckCost())+' 🪙';
+  $('#luckBtn').textContent='Upgrade · '+fmt(luckCost())+' 🪙';
   $('#openChestBtn').disabled=S.chests<=0;
   $('#autoOpenTog').checked=S.settings.autoOpen; $('#autoSellTog').checked=S.settings.autoSell;
 }
@@ -913,7 +915,7 @@ function renderLoop(){
 $('#loopDown').onclick=()=>{ if((S.loop||0)>0){ S.loop--; spawnEnemies(); renderAll(); save(); toast('Loop '+S.loop+' — enemies eased back a notch.'); } };
 $('#loopUp').onclick=()=>{ if((S.loop||0)<(S.maxLoop||0)){ S.loop++; spawnEnemies(); renderAll(); save(); toast('♾️ Loop '+S.loop+' — everything hits harder, loot rolls higher.'); } else toast('Beat The Hollow King at Loop '+(S.loop||0)+' to unlock Loop '+((S.loop||0)+1)+'.'); };
 $('#openChestBtn').onclick=()=>openChest(false);
-$('#luckBtn').onclick=()=>{ if(S.luck>=30){ toast('Luck is maxed.'); return; } const c=luckCost(); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.luck++; toast('Luck up to Lv '+S.luck+' — better loot odds, instantly.'); renderAll(); save(); };
+$('#luckBtn').onclick=()=>{ const c=luckCost(); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.luck++; toast('Luck up to Lv '+S.luck+' — better loot odds, instantly.'); renderAll(); save(); };
 $('#autoOpenTog').onchange=e=>{ S.settings.autoOpen=e.target.checked; save(); };
 $('#autoSellTog').onchange=e=>{ S.settings.autoSell=e.target.checked; save(); };
 $('#speedBtn').onclick=()=>{ S.settings.speed=S.settings.speed>=2?1:2; renderAll(false); save(); };

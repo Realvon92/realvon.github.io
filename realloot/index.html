@@ -25,7 +25,7 @@
   #xpfill{ height:100%; background:linear-gradient(90deg,#7a4fd0,#b45cff); width:0%; transition:width .3s; }
   #xplabel{ font-size:10px; color:var(--dim); margin-top:2px; }
   /* ---------- SCENE ---------- */
-  #scene{ position:relative; height:238px; overflow:hidden; border-bottom:2px solid var(--gold2);
+  #scene{ position:relative; height:254px; overflow:hidden; border-bottom:2px solid var(--gold2);
     background:linear-gradient(180deg,#2b1a3a 0%,#6e2f4f 34%,#b3541e 58%,#5a3a17 59%,#3d2812 100%); }
   #scene.z2{ background:linear-gradient(180deg,#0e2233 0%,#175263 40%,#2e7d6b 60%,#17351f 61%,#0f2415 100%); }
   #scene.z3{ background:linear-gradient(180deg,#10131f 0%,#2c3550 42%,#57607e 60%,#232733 61%,#14161d 100%); }
@@ -58,6 +58,16 @@
   .fighter.downed{ opacity:.35; filter:grayscale(1); }
   .fighter .av.hasimg{ width:66px; height:80px; border-radius:12px; overflow:hidden; padding:0; }
   .fighter .av img{ width:100%; height:100%; object-fit:cover; display:block; }
+.figwrap{ width:88px; height:108px; margin:0 auto; display:flex; align-items:flex-end; justify-content:center; }
+.figwrap.boss{ width:110px; height:136px; }
+.figimg{ height:108px; width:auto; max-width:100px; object-fit:contain; filter:drop-shadow(0 7px 5px rgba(0,0,0,.55)); animation:idleBob 2.3s ease-in-out infinite; }
+.figwrap.boss .figimg{ height:136px; max-width:122px; }
+.fighter.enemy .figwrap{ transform:scaleX(-1); }
+@keyframes idleBob{ 0%,100%{ transform:translateY(0) scale(1); } 50%{ transform:translateY(-4px) scale(1.012); } }
+.fighter{ animation:enterIn .3s ease; }
+@keyframes enterIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+.fighter.downed .figimg{ animation:none; transform:rotate(-70deg) translateY(16px); transition:transform .3s ease; }
+.fighter.hitflash .figimg{ animation:hitf .18s; }
   .pcard .pi img{ width:48px; height:48px; object-fit:cover; border-radius:50%; border:2px solid var(--gold2); }
   .heroRow .av img{ width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
   .pick .pi img{ width:96px; height:96px; object-fit:cover; border-radius:14px; border:2px solid var(--gold2); }
@@ -180,6 +190,15 @@
       <div id="field"><div class="side" id="heroSide"></div><div class="side" id="enemySide"></div></div>
     </div>
 
+    <div class="sec" id="loopSec" style="display:none;padding-bottom:0">
+      <div class="card" style="display:flex;align-items:center;gap:9px;margin-bottom:0">
+        <div style="flex:1"><b style="color:var(--gold)">♾️ Endless Loop <span id="loopLvl">0</span></b>
+        <div style="font-size:11.5px;color:var(--dim)">No max level — every loop makes ALL enemies stronger and ALL loot better. Beat The Hollow King to unlock the next loop.</div></div>
+        <button class="btn small ghost" id="loopDown">−</button>
+        <button class="btn small" id="loopUp">+</button>
+      </div>
+    </div>
+
     <div class="sec">
       <h3>YOUR PARTY <span style="float:right"><button class="btn small ghost" id="speedBtn">Speed 1×</button></span></h3>
       <div id="partyStrip"></div>
@@ -286,10 +305,15 @@
 <script src="art-4.js"></script>
 <script src="art-5.js"></script>
 <script src="art-6.js"></script>
+<script src="artf-1.js"></script>
+<script src="artf-2.js"></script>
+<script src="artf-3.js"></script>
+<script src="artf-4.js"></script>
 <script>
 /* ================= REALLOOT — original auto-battler loot RPG ================= */
 const $=s=>document.querySelector(s);
 const ART=(window.ART||{});
+const ARTF=(window.ARTF||{});
 function artImg(key){ return (key && ART[key])? '<img src="'+ART[key]+'" alt="">' : null; }
 const fmt=n=>{ n=Math.floor(n); if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e4) return (n/1e3).toFixed(1)+'K'; return ''+n; };
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -374,7 +398,7 @@ function defaultState(){
     started:false, gold:120, essence:0, gems:0, shards:0, chests:1,
     acctLvl:1, acctXp:0, luck:1,
     train:{might:0, guard:0, vit:0},
-    zone:1, stage:1, killsThisStage:0, progress:{1:1}, unlockedZones:1, clearedZones:[],
+    zone:1, stage:1, killsThisStage:0, progress:{1:1}, unlockedZones:1, clearedZones:[], loop:0, maxLoop:0,
     heroes:{}, owned:[], party:[], sel:null,
     bag:[], counters:{kills:0,chests:0,goldEarned:0,sold:0,bosses:0,recruits:0},
     goals:[], feats:{}, settings:{speed:1, autoOpen:false, autoSell:false},
@@ -397,9 +421,27 @@ function heroStats(id){
   let atk=base.atk*g, def=base.def*g, hp=base.hp*g, crit=base.crit;
   SLOTS.forEach(sl=>{ const it=hs.gear[sl]; if(it){ atk+=it.stats.atk||0; def+=it.stats.def||0; hp+=it.stats.hp||0; crit+=it.stats.crit||0; } });
   atk+=S.train.might*3; def+=S.train.guard*2; hp+=S.train.vit*20;
-  return {atk:Math.round(atk), def:Math.round(def), hp:Math.round(hp), crit:Math.round(crit*10)/10};
+  const bw=affixSum(id,'bulwark'); if(bw) hp*=1+bw/100;
+  crit+=affixSum(id,'deadeye');
+  return {atk:Math.round(atk), def:Math.round(def), hp:Math.round(hp), crit:Math.round(crit*10)/10, ls:affixSum(id,'lifesteal'), th:affixSum(id,'thorns'), ig:affixSum(id,'ignite'), sw:affixSum(id,'swift')};
 }
 function itemPower(st){ return Math.round((st.atk||0)*2 + (st.def||0)*3 + (st.hp||0)/5 + (st.crit||0)*2); }
+/* ---- Affixes: every drop can roll its own special traits (Von: "each loot got its own uniqueness") ---- */
+const AFFIX=[
+ {k:'ignite', n:'Ignite', i:'🔥', lo:6, hi:12, d:v=>'hits burn for +'+v+'% extra damage'},
+ {k:'lifesteal', n:'Lifesteal', i:'🩸', lo:3, hi:6, d:v=>'heals '+v+'% of damage dealt'},
+ {k:'thorns', n:'Thorns', i:'🌵', lo:5, hi:10, d:v=>'reflects '+v+'% of damage taken'},
+ {k:'swift', n:'Swift', i:'💨', lo:6, hi:12, d:v=>'attacks '+v+'% faster'},
+ {k:'deadeye', n:'Deadeye', i:'🎯', lo:4, hi:8, d:v=>'+'+v+'% crit chance'},
+ {k:'bulwark', n:'Bulwark', i:'🛡️', lo:6, hi:12, d:v=>'+'+v+'% max health'},
+ {k:'greedy', n:'Greedy', i:'💰', lo:10, hi:20, d:v=>'+'+v+'% gold from kills'},
+ {k:'lucky', n:'Lucky', i:'🍀', lo:2, hi:2, d:v=>'+'+v+' Luck on drops while equipped'}
+];
+const AFFIX_BY_K={}; AFFIX.forEach(a=>AFFIX_BY_K[a.k]=a);
+function affixSum(id, k){ const hs=S.heroes[id]; if(!hs) return 0; let t=0; SLOTS.forEach(sl=>{ const it=hs.gear[sl]; if(it && it.af) it.af.forEach(a=>{ if(a.k===k) t+=a.v; }); }); return t; }
+function partyAffix(k){ return S.party.reduce((a,id)=>a+affixSum(id,k),0); }
+function fullPower(it){ return itemPower(it.stats) + (it.af||[]).reduce((a,x)=>a+x.v*2,0); }
+function affixLine(it){ if(!it || !it.af || !it.af.length) return ''; return '<p style="margin-top:5px;font-size:12.5px;line-height:1.5">'+it.af.map(a=>{ const d=AFFIX_BY_K[a.k]; return d? d.i+' <b>'+d.n+'</b> — '+d.d(a.v) : ''; }).join('<br>')+'</p>'; }
 function heroPower(id){ const s=heroStats(id); return s? itemPower(s):0; }
 function partyPower(){ return S.party.reduce((a,id)=>a+heroPower(id),0); }
 function partySlots(){ return S.clearedZones.includes(1)?3:2; }
@@ -409,7 +451,7 @@ function acctXpNeed(){ return 5+(S.acctLvl-1)*5; }
 function genItem(){
   const zone=ZONES[S.zone-1];
   const slot=pickA(SLOTS), rar=rollRarity();
-  const ilvl=Math.max(1, Math.round(((S.zone-1)*10 + S.stage + rnd(-1,2)) * rnd(0.9,1.15)));
+  const ilvl=Math.max(1, Math.round(((S.zone-1)*10 + S.stage + rnd(-1,2) + (S.loop||0)*8) * rnd(0.9,1.15)));
   const m=RMULT[rar]*ilvl, st={atk:0,def:0,hp:0,crit:0};
   if(slot==='weapon'){ st.atk=Math.round(2.3*m); if(rar>=2) st.crit=ri(2,4)+rar; }
   else if(slot==='armor'){ st.hp=Math.round(9.5*m); st.def=Math.round(0.9*m); }
@@ -418,11 +460,15 @@ function genItem(){
   else if(slot==='offhand'){ st.def=Math.round(1.1*m); st.atk=Math.round(0.6*m); }
   else if(slot==='amulet'){ st.hp=Math.round(6*m); st.crit=ri(1,3)+Math.round(rar); }
   const it={uid:uidC++, slot, rar, ilvl, lvl:1, name:itemName(slot,rar), base:Object.assign({},st), stats:Object.assign({},st)};
+  /* Affix roll — higher rarity rolls more traits, so no two drops are alike */
+  const afCounts=[0, Math.random()<0.35?1:0, 1, Math.random()<0.5?2:1, 2, Math.random()<0.5?3:2, 3];
+  let na=afCounts[rar];
+  if(na>0){ it.af=[]; const pool=AFFIX.slice(); while(na-->0 && pool.length){ const a=pool.splice(ri(0,pool.length-1),1)[0]; it.af.push({k:a.k, v:ri(a.lo,a.hi)+rar}); } }
   /* Loot floor (Von's rule): a drop never rolls below the selected hero's equipped piece in that slot */
   const lh=S.sel||S.party[0];
   const cur=(lh && S.heroes[lh])? S.heroes[lh].gear[slot] : null;
   if(cur){
-    const floor=itemPower(cur.stats), mine=itemPower(it.stats);
+    const floor=fullPower(cur), mine=fullPower(it);
     if(mine<floor){
       const f=(floor/mine)*rnd(1.0,1.12);
       ['atk','def','hp'].forEach(k=>{ it.base[k]=Math.round(it.base[k]*f); it.stats[k]=it.base[k]; });
@@ -432,8 +478,8 @@ function genItem(){
   return it;
 }
 function refreshItemStats(it){ const f=Math.pow(1.09, it.lvl-1); SLOTS; ['atk','def','hp','crit'].forEach(k=>{ it.stats[k]=Math.round(it.base[k]*f*10)/10; }); it.powerCache=itemPower(it.stats); }
-function sellValue(it){ return Math.max(2, Math.round(itemPower(it.stats)/5) + it.rar*3 + it.lvl*2); }
-function effLuck(){ return (S.mods && S.mods.luck)? 30 : S.luck; }
+function sellValue(it){ return Math.max(2, Math.round(fullPower(it)/5) + it.rar*3 + it.lvl*2); }
+function effLuck(){ if(S.mods && S.mods.luck) return 30; const lh=S.sel||S.party[0]; return Math.min(30, S.luck + (lh? affixSum(lh,'lucky'):0)); }
 function rollRarity(){
   const L=effLuck(), unlock=[0,2,4,7,11,16,22], factor=[0,6,3.5,2,1.2,0.7,0.35], w=[0,0,0,0,0,0,0];
   let sum=0;
@@ -462,13 +508,14 @@ function isBossStage(){ const z=ZONES[S.zone-1]; return S.stage>=z.stages; }
 function spawnEnemies(){
   E=[]; const z=ZONES[S.zone-1], boss=isBossStage();
   const stageScale=1+(S.stage-1)*0.16, atkScale=1+(S.stage-1)*0.13;
+  const LM=Math.pow(1.6, S.loop||0), LX=1+0.5*(S.loop||0);
   function mk(spec,isBoss,elite){
-    const hp=Math.round(55*z.mult*stageScale*(isBoss?7:elite?1.8:1)*rnd(0.9,1.1));
+    const hp=Math.round(55*z.mult*stageScale*(isBoss?7:elite?1.8:1)*rnd(0.9,1.1)*LM);
     return { name:spec.n, icon:spec.i, art:spec.a, hp, maxHp:hp,
-      atk:Math.round(7*z.mult*atkScale*(isBoss?1.6:elite?1.3:1)*rnd(0.9,1.1)),
-      def:Math.round(2*z.mult*stageScale*(isBoss?1.5:1)), boss:!!isBoss, elite:!!elite,
-      gold:Math.round((8+S.stage*2)*(1+(S.zone-1)*1.2)*(isBoss?12:elite?3:1)*rnd(0.85,1.25)),
-      xp:Math.round((4+S.stage+S.zone*3)*(isBoss?8:elite?2.5:1)) };
+      atk:Math.round(7*z.mult*atkScale*(isBoss?1.6:elite?1.3:1)*rnd(0.9,1.1)*LM),
+      def:Math.round(2*z.mult*stageScale*(isBoss?1.5:1)*LM), boss:!!isBoss, elite:!!elite,
+      gold:Math.round((8+S.stage*2)*(1+(S.zone-1)*1.2)*(isBoss?12:elite?3:1)*rnd(0.85,1.25)*LM),
+      xp:Math.round((4+S.stage+S.zone*3)*(isBoss?8:elite?2.5:1)*LX) };
   }
   if(boss){ E.push(mk(z.boss,true,false)); }
   else{
@@ -497,13 +544,15 @@ function combatTick(dt){
         if(target){ const amt=Math.round(st.atk*1.1 + heroStats(target.h).hp*0.08); B[target.h]=Math.min(heroStats(target.h).hp, B[target.h]+amt); floater(target.h,'+'+amt,'heal'); updateBars(); renderPartyStrip(); }
       }
     }
-    if(timers[id]>=1.6){
+    if(timers[id]>=1.6/(1+(st.sw||0)/100)){
       timers[id]=0;
       const ti=E.findIndex(e=>e.hp>0); if(ti<0) return;
       const e=E[ti], crit=Math.random()*100<st.crit;
       let d=dmgCalc(st.atk, e.def); if(crit) d=Math.round(d*1.8);
+      if(st.ig) d+=Math.round(d*st.ig/100);
       if(S.mods && S.mods.onehit) d=e.hp;
       e.hp-=d; lunge(id,'lungeR'); hitFlash('e'+ti); floater('e'+ti, d, crit?'crit':'');
+      if(st.ls && B[id]>0){ const h=Math.round(d*st.ls/100); if(h>0) B[id]=Math.min(heroStats(id).hp, B[id]+h); }
       if(e.hp<=0) killEnemy(ti); else updateBars();
     }
   });
@@ -519,6 +568,7 @@ function combatTick(dt){
       else{
         const d=dmgCalc(e.atk, st.def);
         B[tid]-=d; lunge('e'+i,'lungeL'); hitFlash(tid); floater(tid,'-'+d,'hurt');
+        if(st.th && e.hp>1){ const rf=Math.min(e.hp-1, Math.round(d*st.th/100)); if(rf>0){ e.hp-=rf; floater('e'+i,'🌵'+rf,''); } }
         if(B[tid]<=0){ B[tid]=0; toast(HERO_BY_ID[tid].name+' is down!'); }
         updateBars(); renderPartyStrip();
         if(!aliveHeroes().length) wipe();
@@ -539,7 +589,7 @@ function wipe(){
 function killEnemy(ti){
   const e=E[ti]; if(!e || e.dead) return; e.dead=true; e.hp=0;
   S.counters.kills++;
-  gainGold(e.gold);
+  gainGold(Math.round(e.gold*(1+partyAffix('greedy')/100)));
   S.party.forEach(id=>{ if(B[id]>0) gainXp(id, e.xp); });
   /* post-kill breather heal */
   S.party.forEach(id=>{ if(B[id]>0){ const mx=heroStats(id).hp; B[id]=Math.min(mx, B[id]+mx*0.12); } });
@@ -573,10 +623,12 @@ function bossDown(){
     S.clearedZones.push(S.zone);
     if(S.zone<ZONES.length){ S.unlockedZones=Math.max(S.unlockedZones, S.zone+1); S.progress[S.zone+1]=S.progress[S.zone+1]||1; }
   }
+  let loopMsg='';
+  if(S.zone===ZONES.length && (S.maxLoop||0)<=(S.loop||0)){ S.maxLoop=(S.loop||0)+1; loopMsg='<p style="margin-top:6px;color:var(--gold)">♾️ <b>Endless Loop '+S.maxLoop+' unlocked!</b> Every loop makes ALL enemies stronger — and ALL loot better. Set your Loop below the battlefield.</p>'; }
   showModal('🏆 '+z.boss.n+' is DOWN!',
     '<p>You cleared <b>'+z.name+'</b>!</p><p style="margin-top:6px">Rewards: 🧰 +3 chests · 🧩 +6 shards · 💎 +5 gems</p>'+
     (firstClear && S.zone===1 ? '<p style="margin-top:6px;color:var(--gold)">New party slot unlocked — you can now field 3 heroes. Check the Heroes tab.</p>':'')+
-    (firstClear && S.zone<ZONES.length ? '<p style="margin-top:6px">Next zone unlocked: <b>'+ZONES[S.zone].name+'</b></p>':''),
+    (firstClear && S.zone<ZONES.length ? '<p style="margin-top:6px">Next zone unlocked: <b>'+ZONES[S.zone].name+'</b></p>':'')+loopMsg,
     [{t:'Keep Hunting', fn:()=>{ closeModal(); if(firstClear && S.zone<ZONES.length){ S.zone++; S.stage=1; S.killsThisStage=0; } else { S.stage=ZONES[S.zone-1].stages; } spawnEnemies(); renderAll(); save(); }}]);
   renderAll(false);
 }
@@ -603,10 +655,10 @@ function openChest(auto){
 }
 function showLootModal(it){
   const sel=S.sel||S.party[0], cur=sel? S.heroes[sel].gear[it.slot]:null;
-  const cmp = cur? '<div class="cmp"><div><b>NEW</b><span class="'+RAR[it.rar].cls+'">'+it.name+'</span><br>Power '+itemPower(it.stats)+'<br>'+statLine(it.stats)+'</div>'+
-    '<div><b>EQUIPPED</b><span class="'+RAR[cur.rar].cls+'">'+cur.name+'</span><br>Power '+itemPower(cur.stats)+'<br>'+statLine(cur.stats)+'</div></div>'
-    : '<p style="margin-top:6px"><span class="'+RAR[it.rar].cls+'"><b>'+it.name+'</b></span> · '+SLOT_NAME[it.slot]+'<br>Power '+itemPower(it.stats)+' · '+statLine(it.stats)+'</p>';
-  showModal('🧰 Chest Opened!', cmp+'<p style="color:var(--dim);font-size:12px">No bag, no clutter — equip it now and your old piece sells itself for essence, or sell the drop itself. Like a piece? Level it up anytime by tapping its gear slot.</p>',
+  const cmp = cur? '<div class="cmp"><div><b>NEW</b><span class="'+RAR[it.rar].cls+'">'+it.name+'</span><br>Power '+fullPower(it)+'<br>'+statLine(it.stats)+'</div>'+
+    '<div><b>EQUIPPED</b><span class="'+RAR[cur.rar].cls+'">'+cur.name+'</span><br>Power '+fullPower(cur)+'<br>'+statLine(cur.stats)+'</div></div>'
+    : '<p style="margin-top:6px"><span class="'+RAR[it.rar].cls+'"><b>'+it.name+'</b></span> · '+SLOT_NAME[it.slot]+'<br>Power '+fullPower(it)+' · '+statLine(it.stats)+'</p>';
+  showModal('🧰 Chest Opened!', cmp+affixLine(it)+'<p style="color:var(--dim);font-size:12px">No bag, no clutter — equip it now and your old piece sells itself for essence, or sell the drop itself. Like a piece? Level it up anytime by tapping its gear slot.</p>',
    [{t:'Equip to '+(sel?HERO_BY_ID[sel].name.split(' ')[0]:'hero'), fn:()=>{ equipDrop(it, sel); closeModal(); renderAll(); save(); }},
     {t:'Sell +'+sellValue(it)+' 🔮', fn:()=>{ const v=sellDrop(it); toast('Sold for '+v+' 🔮'); closeModal(); renderAll(); save(); }}]);
 }
@@ -704,6 +756,12 @@ function renderTop(){
   $('#xplabel').textContent='Account Lv '+S.acctLvl+' · '+S.acctXp+'/'+acctXpNeed()+' XP';
 }
 function fighterHTML(key, icon, name, frac, isEnemy, downed, artKey){
+  const fk=(artKey && artKey.indexOf('hero-')===0)? artKey.slice(5): artKey;
+  const fimg=fk? ARTF[fk]:null;
+  if(fimg){ let s=0; for(let i=0;i<fk.length;i++) s+=fk.charCodeAt(i); const dl=-((s%18)/8).toFixed(2);
+    return '<div class="fighter '+(isEnemy?'enemy':'')+(downed?' downed':'')+'" id="f-'+key+'">'+
+    '<div class="figwrap'+(fk.indexOf('boss')===0?' boss':'')+'"><img class="figimg" src="'+fimg+'" style="animation-delay:'+dl+'s" alt=""></div><div class="nm">'+name+'</div>'+
+    '<div class="hpbar"><div class="hpfill" style="width:'+Math.max(0,frac*100)+'%"></div></div></div>'; }
   const img=artImg(artKey);
   return '<div class="fighter '+(isEnemy?'enemy':'')+(downed?' downed':'')+'" id="f-'+key+'">'+
     '<div class="av'+(img?' hasimg':'')+'">'+(img||icon)+'</div><div class="nm">'+name+'</div>'+
@@ -714,7 +772,7 @@ function buildScene(){
   $('#scene').className=''; $('#scene').id='scene'; $('#scene').classList.add('z'+S.zone);
   $('#scenery').innerHTML=(z.scenery||[]).map(s=>'<span>'+s+'</span>').join('');
   $('#stageBanner .zname').textContent=z.name;
-  $('#stageBanner .sname').textContent=isBossStage()? 'Stage '+S.stage+' of '+z.stages+' — BOSS' : 'Stage '+S.stage+' of '+z.stages;
+  $('#stageBanner .sname').textContent=(isBossStage()? 'Stage '+S.stage+' of '+z.stages+' — BOSS' : 'Stage '+S.stage+' of '+z.stages)+((S.loop||0)>0? ' · ♾️ Loop '+S.loop : '');
   $('#killInfo').textContent=isBossStage()? 'Boss fight!' : 'Kills '+S.killsThisStage+'/5';
   const zt=$('#zonetabs'); zt.innerHTML='';
   for(let i=1;i<=S.unlockedZones;i++){ const b=document.createElement('button'); b.textContent='Z'+i+' '+ZONES[i-1].name.split(' ')[0]; if(i===S.zone)b.className='on'; b.onclick=()=>{ S.zone=i; S.stage=S.progress[i]||1; S.killsThisStage=0; spawnEnemies(); renderAll(); save(); }; zt.appendChild(b); }
@@ -767,7 +825,7 @@ function itemModal(it, heroId, slot){
   const cost=levelItemCost(it);
   showModal(SLOT_ICON[it.slot]+' '+it.name,
     '<p><span class="'+RAR[it.rar].cls+'"><b>'+RAR[it.rar].n+'</b></span> '+SLOT_NAME[it.slot]+' · Item Lv '+it.ilvl+' · +'+it.lvl+'</p>'+
-    '<p style="margin-top:5px">'+statLine(it.stats)+'</p><p style="margin-top:4px">Power <b>'+itemPower(it.stats)+'</b> · Sell value '+sellValue(it)+' 🔮</p>'+
+    '<p style="margin-top:5px">'+statLine(it.stats)+'</p>'+affixLine(it)+'<p style="margin-top:4px">Power <b>'+fullPower(it)+'</b> · Sell value '+sellValue(it)+' 🔮</p>'+
     '<p style="margin-top:4px;color:var(--dim);font-size:12px">Level up cost: '+cost+' 🔮 (+9% stats)</p>',
    [{t:'Level Up ('+cost+' 🔮)', fn:()=>{ if(levelUpItem(it)){ itemModal(it, heroId, slot); } }},
     {t:'Sell', fn:()=>{ sellEquipped(heroId, slot); closeModal(); }},
@@ -837,7 +895,7 @@ function renderGoals(){
 }
 function renderAll(sceneToo){
   if(sceneToo!==false){ /* scene rebuilt only on spawn; bars cheap */ }
-  renderTop(); updateBars(); renderPartyStrip(); renderDetail(); renderChest(); renderHeroes(); renderTrain(); renderGoals();
+  renderTop(); updateBars(); renderPartyStrip(); renderDetail(); renderChest(); renderLoop(); renderHeroes(); renderTrain(); renderGoals();
   $('#speedBtn').textContent='Speed '+S.settings.speed+'×';
   document.querySelectorAll('[data-mod]').forEach(inp=>{ if(S.mods) inp.checked=!!S.mods[inp.dataset.mod]; });
 }
@@ -847,6 +905,13 @@ document.querySelectorAll('#nav button').forEach(b=>{
   b.onclick=()=>{ document.querySelectorAll('#nav button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
     document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); $('#panel-'+b.dataset.tab).classList.add('active'); };
 });
+function renderLoop(){
+  const on=(S.clearedZones||[]).includes(ZONES.length);
+  const el=$('#loopSec'); if(el) el.style.display=on? 'block':'none';
+  if(on) $('#loopLvl').textContent=S.loop||0;
+}
+$('#loopDown').onclick=()=>{ if((S.loop||0)>0){ S.loop--; spawnEnemies(); renderAll(); save(); toast('Loop '+S.loop+' — enemies eased back a notch.'); } };
+$('#loopUp').onclick=()=>{ if((S.loop||0)<(S.maxLoop||0)){ S.loop++; spawnEnemies(); renderAll(); save(); toast('♾️ Loop '+S.loop+' — everything hits harder, loot rolls higher.'); } else toast('Beat The Hollow King at Loop '+(S.loop||0)+' to unlock Loop '+((S.loop||0)+1)+'.'); };
 $('#openChestBtn').onclick=()=>openChest(false);
 $('#luckBtn').onclick=()=>{ if(S.luck>=30){ toast('Luck is maxed.'); return; } const c=luckCost(); if(S.gold<c){ toast('Not enough gold.'); return; } S.gold-=c; S.luck++; toast('Luck up to Lv '+S.luck+' — better loot odds, instantly.'); renderAll(); save(); };
 $('#autoOpenTog').onchange=e=>{ S.settings.autoOpen=e.target.checked; save(); };
@@ -907,6 +972,7 @@ function offlineGains(){
   if(!had || !S.started){ if(!had) S=defaultState(); showStart(); if(had&&S.started){} return; }
   applyNames();
   S.mods=Object.assign({rich:false,onehit:false,god:false,rain:false,luck:false,boost:false,recruit:false,turbo:false}, S.mods||{});
+  S.loop=S.loop||0; S.maxLoop=S.maxLoop||0;
   if(S.bag && S.bag.length){ let v=0; S.bag.forEach(i=>{ v+=sellValue(i); }); S.essence+=v; S.counters.sold+=S.bag.length; S.bag=[]; }
   uidC=1; S.bag.forEach(i=>uidC=Math.max(uidC,i.uid+1)); S.owned.forEach(id=>SLOTS.forEach(sl=>{ const it=S.heroes[id].gear[sl]; if(it) uidC=Math.max(uidC,it.uid+1); }));
   S.party.forEach(id=>{ B[id]=heroStats(id).hp; });

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Movie Shelf — VT-5</title>
+<title>Movie Shelf — VT-6</title>
 <style>
   html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;height:100%;overflow:hidden}
   #app{display:flex;flex-direction:column;align-items:center;height:100vh;padding:8px 10px;box-sizing:border-box}
@@ -31,7 +31,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="top">MOVIE SHELF <span>build VT-5</span></div>
+  <div id="top">MOVIE SHELF <span>build VT-6</span></div>
   <video id="v" controls playsinline preload="metadata"></video>
   <div id="card">
     <img id="poster" alt="">
@@ -53,18 +53,30 @@
 </div>
 <script>
 var SHELF = [
-  { title: "The Terror", year: "1963", genre: "Horror", note: "Boris Karloff + a young Jack Nicholson. The one you already started.", id: "TheTerror1963", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
-  { title: "House on Haunted Hill", year: "1959", genre: "Horror", note: "Vincent Price offers five strangers $10,000 to survive one night in his haunted house.", id: "house_on_haunted_hill", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
-  { title: "Carnival of Souls", year: "1962", genre: "Horror", note: "A woman survives a car crash, then keeps seeing a pale stranger everywhere. Cult classic.", id: "carnival_of_souls", src: "https://archive.org/download/carnival_of_souls/carnival_of_souls_512kb.mp4" },
-  { title: "The Little Shop of Horrors", year: "1960", genre: "Horror Comedy", note: "A shy florist raises a plant that eats people. Jack Nicholson shows up too.", id: "TheLittleShopOfHorrors", src: "https://archive.org/download/TheLittleShopOfHorrors/The%20Little%20Shop%20of%20Horrors.mp4" },
-  { title: "White Zombie", year: "1932", genre: "Horror", note: "Bela Lugosi turns plantation workers into zombies. The first zombie movie ever made.", id: "WhiteZombie1932", src: "https://archive.org/download/WhiteZombie1932/WhiteZombie_512kb.mp4" },
-  { title: "The Vampire Bat", year: "1933", genre: "Horror", note: "A village panics as victims turn up drained of blood, night after night.", id: "TheVampireBat1933", src: "https://archive.org/download/TheVampireBat1933/the-vampire-bat-1933_512kb.mp4" },
-  { title: "Nosferatu", year: "1922", genre: "Horror Classic", note: "The original vampire film — silent, eerie, and still creepy a century later.", id: "Nosferatu1922", src: "https://archive.org/download/Nosferatu1922/Nosferatu-smaller2.mp4" },
-  { title: "Attack of the Giant Leeches", year: "1959", genre: "Sci-Fi Horror", note: "Giant leeches drag swamp locals into underwater caves. Pure drive-in cheese.", id: "AttackOfTheGiantLeeches", src: "https://archive.org/download/AttackOfTheGiantLeeches/AttackOfTheGiantLeeches_512kb.mp4" },
-  { title: "Teenagers From Outer Space", year: "1959", genre: "Sci-Fi", note: "An alien teen lands on Earth and turns on his own crew to protect us.", id: "TeenagersFromOuterSpace", src: "https://archive.org/download/TeenagersFromOuterSpace/TeenagersFromOuterSpace_512kb.mp4" },
-  { title: "Suddenly", year: "1954", genre: "Thriller", note: "Frank Sinatra plays a hired killer holding a family hostage to shoot the President.", id: "Suddenly1954", src: "https://archive.org/download/Suddenly1954/Suddenly_1954.mp4" },
-  { title: "The General", year: "1926", genre: "Comedy Classic", note: "Buster Keaton chases a stolen train. Often called the greatest silent comedy ever.", id: "TheGeneral1926", src: "https://archive.org/download/TheGeneral1926/The_General_1926_720p_512kb.mp4" },
-  { title: "The Lost World", year: "1925", genre: "Adventure", note: "Explorers find living dinosaurs on a plateau. The effects grandfather of King Kong.", id: "TheLostWorld1925", src: "https://archive.org/download/TheLostWorld1925/TheLostWorld1925_256.mp4" }
+  {"title": "The Terror", "year": "1963", "genre": "Horror", "note": "Boris Karloff + a young Jack Nicholson. The one you already started.", "id": "TheTerror1963", "src": "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4"},
+  {"title": "House on Haunted Hill", "year": "1959", "genre": "Horror", "note": "Vincent Price offers five strangers $10,000 to survive one night in his haunted house.", "id": "house_on_haunted_hill", "src": "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4"},
+  {"title": "Carnival of Souls", "year": "1962", "genre": "Horror", "note": "A woman survives a car crash, then keeps seeing a pale stranger everywhere. Cult classic.", "id": "carnival_of_souls", "src": "https://archive.org/download/carnival_of_souls/carnival_of_souls_512kb.mp4"},
+  {"title": "The Little Shop of Horrors", "year": "1960", "genre": "Horror Comedy", "note": "A shy florist raises a plant that eats people. Jack Nicholson shows up too.", "id": "TheLittleShopOfHorrors", "src": "https://archive.org/download/TheLittleShopOfHorrors/The%20Little%20Shop%20of%20Horrors.mp4"},
+  {"title": "White Zombie", "year": "1932", "genre": "Horror", "note": "Bela Lugosi turns plantation workers into zombies. The first zombie movie ever made.", "id": "WhiteZombie1932", "src": "https://archive.org/download/WhiteZombie1932/WhiteZombie_512kb.mp4"},
+  {"title": "The Vampire Bat", "year": "1933", "genre": "Horror", "note": "A village panics as victims turn up drained of blood, night after night.", "id": "TheVampireBat1933", "src": "https://archive.org/download/TheVampireBat1933/the-vampire-bat-1933_512kb.mp4"},
+  {"title": "Nosferatu", "year": "1922", "genre": "Horror Classic", "note": "The original vampire film — silent, eerie, and still creepy a century later.", "id": "Nosferatu1922", "src": "https://archive.org/download/Nosferatu1922/Nosferatu-smaller2.mp4"},
+  {"title": "Attack of the Giant Leeches", "year": "1959", "genre": "Sci-Fi Horror", "note": "Giant leeches drag swamp locals into underwater caves. Pure drive-in cheese.", "id": "AttackOfTheGiantLeeches", "src": "https://archive.org/download/AttackOfTheGiantLeeches/AttackOfTheGiantLeeches_512kb.mp4"},
+  {"title": "Teenagers From Outer Space", "year": "1959", "genre": "Sci-Fi", "note": "An alien teen lands on Earth and turns on his own crew to protect us.", "id": "TeenagersFromOuterSpace", "src": "https://archive.org/download/TeenagersFromOuterSpace/TeenagersFromOuterSpace_512kb.mp4"},
+  {"title": "Suddenly", "year": "1954", "genre": "Thriller", "note": "Frank Sinatra plays a hired killer holding a family hostage to shoot the President.", "id": "Suddenly1954", "src": "https://archive.org/download/Suddenly1954/Suddenly_1954.mp4"},
+  {"title": "The General", "year": "1926", "genre": "Comedy Classic", "note": "Buster Keaton chases a stolen train. Often called the greatest silent comedy ever.", "id": "TheGeneral1926", "src": "https://archive.org/download/TheGeneral1926/The_General_1926_720p_512kb.mp4"},
+  {"title": "The Lost World", "year": "1925", "genre": "Adventure", "note": "Explorers find living dinosaurs on a plateau. The effects grandfather of King Kong.", "id": "TheLostWorld1925", "src": "https://archive.org/download/TheLostWorld1925/TheLostWorld1925_256.mp4"},
+  {"title": "Bloody Pit of Horror", "year": "1965", "genre": "Horror", "note": "A photo crew sneaks into a castle and wakes its owner — a man who thinks he's a medieval executioner.", "id": "BloodyPitOfHorror", "src": "https://archive.org/download/BloodyPitOfHorror/BloodyPitOfHorror.mp4"},
+  {"title": "The Phantom of the Opera", "year": "1925", "genre": "Horror Classic", "note": "Lon Chaney as the masked Phantom haunting the Paris Opera House. Silent-era landmark.", "id": "ThePhantomoftheOpera", "src": "https://archive.org/download/ThePhantomoftheOpera/Phantom_of_the_Opera_512kb.mp4"},
+  {"title": "Voyage to the Planet of Prehistoric Women", "year": "1967", "genre": "Sci-Fi", "note": "Astronauts crash on Venus and meet its telepathic cave women. Peak 60s sci-fi cheese.", "id": "VoyagetothePlanetofPrehistoricWomen", "src": "https://archive.org/download/VoyagetothePlanetofPrehistoricWomen/VoyagetothePlanetofPrehistoricWomen_512kb.mp4"},
+  {"title": "The Fast and the Furious", "year": "1955", "genre": "Crime Drama", "note": "The original — a man wrongly jailed for murder breaks out and runs. Where the franchise name started.", "id": "TheFastandtheFuriousJohnIreland1954goofyrip", "src": "https://archive.org/download/TheFastandtheFuriousJohnIreland1954goofyrip/TheFastandtheFuriousJohnIreland1954goofyrip_512kb.mp4"},
+  {"title": "His Girl Friday", "year": "1940", "genre": "Comedy", "note": "Cary Grant as a newspaper editor who'll do anything to stop his ex-wife — and star reporter — from leaving.", "id": "his_girl_friday", "src": "https://archive.org/download/his_girl_friday/his_girl_friday_512kb.mp4"},
+  {"title": "Charlie Chaplin Festival", "year": "1938", "genre": "Comedy", "note": "Four Chaplin shorts from 1917: The Adventurer, The Cure, Easy Street and The Immigrant.", "id": "charlie_chaplin_film_fest", "src": "https://archive.org/download/charlie_chaplin_film_fest/charlie_chaplin_film_fest_512kb.mp4"},
+  {"title": "Jungle Book", "year": "1942", "genre": "Adventure", "note": "Sabu as Mowgli, the boy raised by wolves. The first big-screen Jungle Book, in Technicolor.", "id": "JungleBook", "src": "https://archive.org/download/JungleBook/Jungle_Book_512kb.mp4"},
+  {"title": "20,000 Leagues Under the Sea", "year": "1916", "genre": "Adventure Classic", "note": "Captain Nemo and the Nautilus — the first filming of Jules Verne's classic, over 100 years old.", "id": "20000LeaguesUndertheSea", "src": "https://archive.org/download/20000LeaguesUndertheSea/20000_Leagues_Under_the_Sea_512kb.mp4"},
+  {"title": "Sintel", "year": "2010", "genre": "Fantasy Short", "note": "A girl crosses frozen mountains searching for the baby dragon she once rescued. Beautiful — only 14 minutes.", "id": "Sintel", "src": "https://archive.org/download/Sintel/sintel-2048-surround_512kb.mp4"},
+  {"title": "McLintock!", "year": "1963", "genre": "Western", "note": "John Wayne as a cattle baron whose spitfire wife comes home ready for a fight. Western comedy.", "id": "mclintok_widescreen", "src": "https://archive.org/download/mclintok_widescreen/McLintock_512kb.mp4"},
+  {"title": "Santa Fe Trail", "year": "1940", "genre": "Western", "note": "Errol Flynn as Jeb Stuart, riding against John Brown's raiders before the Civil War.", "id": "Santa_Fe_Trail_movie", "src": "https://archive.org/download/Santa_Fe_Trail_movie/Santa_Fe_Trail_512kb.mp4"},
+  {"title": "The Gun and the Pulpit", "year": "1974", "genre": "Western", "note": "A gunfighter posing as a preacher stands up for a frontier town that needs one.", "id": "cco_thegunandthepulpit", "src": "https://archive.org/download/cco_thegunandthepulpit/ccoPublicDomainThe_Gun_and_the_Pulpit_512kb.mp4"}
 ];
 var v = document.getElementById('v');
 var st = document.getElementById('status');

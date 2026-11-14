@@ -3,128 +3,189 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Movie Player — VT-2</title>
+<title>Movie Player — VT-3</title>
 <style>
   html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;height:100%;overflow:hidden}
   #app{display:flex;flex-direction:column;align-items:center;height:100vh;padding:8px 10px;box-sizing:border-box}
   #top{font-size:18px;font-weight:bold;letter-spacing:1px;color:#f5c518}
   #top span{color:#888;font-size:12px;font-weight:normal}
-  video{width:100%;max-height:38vh;background:#111;margin-top:6px;border:1px solid #333}
-  body.watch video{position:fixed;inset:0;width:100vw;height:100vh;max-height:none;border:none;z-index:50;object-fit:contain;background:#000}
+  video{display:none}
+  body.watch video{display:block;position:fixed;inset:0;width:100vw;height:100vh;border:none;z-index:50;object-fit:contain;background:#000}
   body.watch #app > *:not(video){visibility:hidden}
-  #clipName{font-size:18px;font-weight:bold;margin-top:7px;text-align:center;line-height:1.2}
-  #counter{font-size:13px;color:#aaa;margin-top:1px}
-  #playBtn{margin-top:8px;background:#f5c518;color:#000;border:none;border-radius:12px;
-           font-size:25px;font-weight:bold;padding:13px 40px;min-width:72%}
+  #qBox{margin-top:8px;width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:10px;border:1px solid #555;background:#111;color:#fff}
+  #searchBtn{margin-top:7px;background:#2b6cb0;color:#fff;border:none;border-radius:12px;font-size:20px;font-weight:bold;padding:11px 30px;min-width:72%}
+  #searchBtn:active{background:#3a86d4}
+  #card{margin-top:10px;width:100%;box-sizing:border-box;background:#141414;border:1px solid #333;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
+  #poster{width:62px;height:88px;object-fit:cover;border-radius:6px;background:#222;flex:none}
+  #meta{flex:1;min-width:0}
+  #rTitle{font-size:21px;font-weight:bold;line-height:1.2;word-wrap:break-word}
+  #rSub{font-size:14px;color:#aaa;margin-top:3px}
+  #navRow{margin-top:8px;display:flex;align-items:center;gap:14px}
+  .navBtn{background:#222;color:#f5c518;border:1px solid #444;border-radius:10px;font-size:24px;padding:8px 22px}
+  .navBtn:active{background:#333}
+  #counter{font-size:15px;color:#ccc}
+  #playBtn{margin-top:9px;background:#f5c518;color:#000;border:none;border-radius:12px;font-size:25px;font-weight:bold;padding:13px 40px;min-width:72%}
   #playBtn:active{background:#ffd94d}
-  #linkRow{margin-top:10px;width:100%;display:flex;flex-direction:column;align-items:center}
-  #urlBox{width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:10px;border:1px solid #555;background:#111;color:#fff}
-  #loadBtn{margin-top:7px;background:#2b6cb0;color:#fff;border:none;border-radius:12px;
-           font-size:20px;font-weight:bold;padding:11px 30px;min-width:72%}
-  #loadBtn:active{background:#3a86d4}
   #hint{font-size:12px;color:#888;margin-top:7px;text-align:center}
-  #status{margin-top:5px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;
-          font-family:monospace;font-size:12px;line-height:1.3;padding:5px 8px;border-radius:8px;
-          min-height:42px;white-space:pre-wrap;word-break:break-word}
+  #status{margin-top:5px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;font-family:monospace;font-size:12px;line-height:1.3;padding:5px 8px;border-radius:8px;min-height:42px;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top">MOVIE PLAYER <span>build VT-2</span></div>
+  <div id="top">MOVIE PLAYER <span>build VT-3</span></div>
   <video id="v" controls playsinline preload="metadata"></video>
-  <div id="clipName"></div>
-  <div id="counter"></div>
-  <button id="playBtn">&#9654; PLAY</button>
-  <div id="linkRow">
-    <input id="urlBox" type="text" placeholder="Paste a direct video link here (.mp4)">
-    <button id="loadBtn">LOAD &amp; PLAY LINK</button>
+  <input id="qBox" type="text" placeholder="Type a movie title — or paste a .mp4 link">
+  <button id="searchBtn">SEARCH</button>
+  <div id="card">
+    <img id="poster" alt="">
+    <div id="meta">
+      <div id="rTitle"></div>
+      <div id="rSub"></div>
+    </div>
   </div>
-  <div id="hint">Swipe &#9664; &#9654; switches built-in movies &middot; video fills the lens while playing &middot; pause to get controls back</div>
+  <div id="navRow">
+    <button class="navBtn" id="prevBtn">&#9664;</button>
+    <div id="counter"></div>
+    <button class="navBtn" id="nextBtn">&#9654;</button>
+  </div>
+  <button id="playBtn">&#9654; PLAY MOVIE</button>
+  <div id="hint">Swipe or use &#9664; &#9654; to browse &middot; video fills the lens while playing &middot; pause to come back</div>
   <div id="status">status: ready</div>
 </div>
 <script>
-var CLIPS = [
-  { name: "The Terror (1963) — full movie", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
-  { name: "House on Haunted Hill (1959) — full movie", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
-  { name: "Quick Test Clip (5 sec)", src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" }
+var STARTERS = [
+  { title: "The Terror (1963)", year: "1963", id: "TheTerror1963", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
+  { title: "House on Haunted Hill (1959)", year: "1959", id: "house_on_haunted_hill", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
+  { title: "Carnival of Souls (1962)", year: "1962", id: "carnival_of_souls", src: "https://archive.org/download/carnival_of_souls/carnival_of_souls_512kb.mp4" }
 ];
+var results = STARTERS.slice();
+var idx = 0;
 var v = document.getElementById('v');
-var btn = document.getElementById('playBtn');
 var st = document.getElementById('status');
-var idx = 0, lastLog = 'ready', custom = false;
+var lastLog = 'ready';
 
 function fmt(t){ if(!isFinite(t)) return '0:00'; t=Math.floor(t); var m=Math.floor(t/60), s=t%60; return m+':'+(s<10?'0':'')+s; }
 function log(msg){
   lastLog = msg;
-  st.textContent = 'status: ' + msg + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration) + '  readyState: ' + v.readyState;
+  st.textContent = 'status: ' + msg + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration);
 }
+function showCard(){
+  var r = results[idx];
+  if (!r){ document.getElementById('rTitle').textContent = 'No movies found'; document.getElementById('rSub').textContent = ''; document.getElementById('counter').textContent = '0 of 0'; document.getElementById('poster').style.visibility = 'hidden'; return; }
+  var t = document.getElementById('rTitle');
+  t.textContent = r.title;
+  t.style.fontSize = r.title.length > 55 ? '15px' : (r.title.length > 32 ? '18px' : '21px');
+  document.getElementById('rSub').textContent = (r.year ? r.year + ' · ' : '') + 'archive.org';
+  document.getElementById('counter').textContent = (idx+1) + ' of ' + results.length;
+  var img = document.getElementById('poster');
+  if (r.id){ img.style.visibility = 'visible'; img.src = 'https://archive.org/services/img/' + r.id; }
+  else img.style.visibility = 'hidden';
+}
+function move(d){ if (!results.length) return; idx = (idx + d + results.length) % results.length; showCard(); log('browsing: ' + results[idx].title); }
 function goFull(){
   try { if (v.requestFullscreen) { var r = v.requestFullscreen(); if (r && r.catch) r.catch(function(){}); } } catch(e){}
   try { if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); } catch(e){}
   document.body.classList.add('watch');
 }
 function exitFull(){ document.body.classList.remove('watch'); }
-function load(i){
-  custom = false;
-  idx = (i + CLIPS.length) % CLIPS.length;
-  document.getElementById('clipName').textContent = CLIPS[idx].name;
-  document.getElementById('counter').textContent = 'Movie ' + (idx+1) + ' of ' + CLIPS.length;
-  btn.innerHTML = '&#9654; PLAY';
-  exitFull();
-  v.src = CLIPS[idx].src;
-  v.load();
-  log('loaded movie ' + (idx+1) + ', fetching...');
-}
-function playIt(){
+function playCurrent(){
+  var r = results[idx];
+  if (!r){ log('nothing to play — search first'); return; }
+  if (v.getAttribute('data-loaded') !== r.src){ v.src = r.src; v.setAttribute('data-loaded', r.src); v.load(); }
   var p = v.play();
   if (p && p.catch) p.catch(function(e){ log('PLAY BLOCKED: ' + e.name + ' — ' + e.message); });
   goFull();
-  log('play pressed...');
+  log('loading ' + r.title + '...');
 }
-function toggle(){
-  if (v.paused || v.ended) playIt(); else v.pause();
+function togglePlay(){ if (v.paused || v.ended) playCurrent(); else v.pause(); }
+
+function pickMp4(files, ident){
+  var mp4s = [];
+  for (var i = 0; i < files.length; i++){
+    var n = files[i].name || '';
+    if (!/\.mp4$/i.test(n)) continue;
+    if (/trailer|sample|preview/i.test(n)) continue;
+    mp4s.push({ name: n, size: parseInt(files[i].size || '0', 10) });
+  }
+  if (!mp4s.length) return null;
+  var kb = null;
+  for (var j = 0; j < mp4s.length; j++) if (/512kb/i.test(mp4s[j].name)) { kb = mp4s[j]; break; }
+  var pick = kb;
+  if (!pick){
+    mp4s.sort(function(a,b){ return a.size - b.size; });
+    var big = mp4s.filter(function(f){ return f.size > 80000000; });
+    pick = big.length ? big[0] : mp4s[mp4s.length - 1];
+  }
+  return 'https://archive.org/download/' + ident + '/' + encodeURIComponent(pick.name);
 }
-btn.addEventListener('click', toggle);
-v.addEventListener('click', toggle);
-document.getElementById('loadBtn').addEventListener('click', function(){
-  var url = document.getElementById('urlBox').value.replace(/\s+/g,'').trim();
-  if (!url){ log('paste a link in the box first'); return; }
-  custom = true;
-  document.getElementById('clipName').textContent = 'Your link';
-  document.getElementById('counter').textContent = 'custom link';
-  btn.innerHTML = '&#9654; PLAY';
-  v.src = url;
-  v.load();
-  if (!/\.(mp4|webm|m3u8|mov)(\?|#|$)/i.test(url)) log('loading link — note: watch-page links will not play, only direct video files');
-  else log('loading your link...');
-  playIt();
-});
-v.addEventListener('canplay', function(){ log('can play — pinch PLAY'); });
-v.addEventListener('playing', function(){ btn.innerHTML = '&#10073;&#10073; PAUSE'; goFull(); log('PLAYING — full lens'); });
-v.addEventListener('pause', function(){ btn.innerHTML = '&#9654; PLAY'; exitFull(); log('paused'); });
+
+function doSearch(){
+  var q = document.getElementById('qBox').value.replace(/\s+/g, ' ').trim();
+  if (!q){ log('type a movie title in the box first'); return; }
+  if (/:\/\//.test(q)){
+    results = [{ title: 'Your link', year: '', id: '', src: q.replace(/\s/g, '') }];
+    idx = 0; showCard(); playCurrent(); return;
+  }
+  log('searching archive.org for "' + q + '"...');
+  var query = 'title:(' + q + ') AND mediatype:movies AND collection:(feature_films OR film_noir OR SciFi_Horror OR comedy_films OR animationandcartoons)';
+  var url = 'https://archive.org/advancedsearch.php?q=' + encodeURIComponent(query) +
+            '&fl[]=identifier&fl[]=title&fl[]=year&rows=12&sort[]=downloads desc&output=json';
+  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+    var docs = (d.response && d.response.docs) || [];
+    if (!docs.length){ results = []; showCard(); log('no matches — try different words'); return; }
+    log('found ' + docs.length + ' — checking which have playable files...');
+    var jobs = docs.map(function(doc){
+      return fetch('https://archive.org/metadata/' + encodeURIComponent(doc.identifier))
+        .then(function(r){ return r.json(); })
+        .then(function(m){
+          if (m.is_dark) return null;
+          var src = pickMp4(m.files || [], doc.identifier);
+          if (!src) return null;
+          return { title: doc.title || doc.identifier, year: doc.year || '', id: doc.identifier, src: src };
+        }).catch(function(){ return null; });
+    });
+    Promise.all(jobs).then(function(list){
+      results = list.filter(function(x){ return x; });
+      idx = 0; showCard();
+      if (results.length) log('ready — ' + results.length + ' playable movies. Pinch PLAY MOVIE.');
+      else log('matches found but no playable video files');
+    });
+  }).catch(function(e){ log('search failed — ' + e.message); });
+}
+
+document.getElementById('searchBtn').addEventListener('click', doSearch);
+document.getElementById('playBtn').addEventListener('click', playCurrent);
+document.getElementById('prevBtn').addEventListener('click', function(){ move(-1); });
+document.getElementById('nextBtn').addEventListener('click', function(){ move(1); });
+document.getElementById('card').addEventListener('click', playCurrent);
+v.addEventListener('click', togglePlay);
+v.addEventListener('playing', function(){ goFull(); log('PLAYING — full lens'); });
+v.addEventListener('pause', function(){ exitFull(); log('paused'); });
 v.addEventListener('waiting', function(){ log('buffering...'); });
-v.addEventListener('stalled', function(){ log('stalled — host is slow, give it a few seconds'); });
-v.addEventListener('ended', function(){ btn.innerHTML = '&#9654; PLAY AGAIN'; exitFull(); log('ended'); });
+v.addEventListener('stalled', function(){ log('stalled — archive.org is slow, give it a few seconds'); });
+v.addEventListener('ended', function(){ exitFull(); log('ended'); });
 v.addEventListener('error', function(){
   var e = v.error;
-  log('ERROR ' + (e ? ('code ' + e.code + ' ' + (e.message||'')) : 'unknown') + ' — link may not be a direct video file');
+  log('ERROR ' + (e ? ('code ' + e.code) : 'unknown') + ' — that file would not play');
 }, true);
 v.addEventListener('timeupdate', function(){
-  st.textContent = 'status: ' + lastLog + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration) + '  readyState: ' + v.readyState;
+  if (document.body.classList.contains('watch')) return;
+  st.textContent = 'status: ' + lastLog + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration);
 });
 var tx = 0, ty = 0;
 document.addEventListener('touchstart', function(e){ tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, {passive:true});
 document.addEventListener('touchend', function(e){
   if (document.body.classList.contains('watch')) return;
   var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
-  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) load(idx + (dx < 0 ? 1 : -1));
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) move(dx < 0 ? 1 : -1);
 }, {passive:true});
 document.addEventListener('keydown', function(e){
-  if (e.key === 'ArrowRight') load(idx + 1);
-  else if (e.key === 'ArrowLeft') load(idx - 1);
-  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  if (e.key === 'ArrowRight') move(1);
+  else if (e.key === 'ArrowLeft') move(-1);
+  else if (e.key === 'Enter') togglePlay();
 });
-load(0);
+showCard();
+log('ready — search a title, or start with a starter pick');
 </script>
 </body>
 </html>

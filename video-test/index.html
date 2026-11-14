@@ -3,79 +3,111 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Video Test — VT-1</title>
+<title>Movie Player — VT-2</title>
 <style>
   html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;height:100%;overflow:hidden}
   #app{display:flex;flex-direction:column;align-items:center;height:100vh;padding:8px 10px;box-sizing:border-box}
-  #top{font-size:19px;font-weight:bold;letter-spacing:1px;color:#f5c518}
-  #top span{color:#888;font-size:13px;font-weight:normal}
-  video{width:100%;max-height:46vh;background:#111;margin-top:6px;border:1px solid #333}
-  #clipName{font-size:19px;font-weight:bold;margin-top:8px;text-align:center;line-height:1.2}
-  #counter{font-size:14px;color:#aaa;margin-top:2px}
-  #playBtn{margin-top:10px;background:#f5c518;color:#000;border:none;border-radius:12px;
-           font-size:27px;font-weight:bold;padding:16px 44px;min-width:70%}
+  #top{font-size:18px;font-weight:bold;letter-spacing:1px;color:#f5c518}
+  #top span{color:#888;font-size:12px;font-weight:normal}
+  video{width:100%;max-height:38vh;background:#111;margin-top:6px;border:1px solid #333}
+  body.watch video{position:fixed;inset:0;width:100vw;height:100vh;max-height:none;border:none;z-index:50;object-fit:contain;background:#000}
+  body.watch #app > *:not(video){visibility:hidden}
+  #clipName{font-size:18px;font-weight:bold;margin-top:7px;text-align:center;line-height:1.2}
+  #counter{font-size:13px;color:#aaa;margin-top:1px}
+  #playBtn{margin-top:8px;background:#f5c518;color:#000;border:none;border-radius:12px;
+           font-size:25px;font-weight:bold;padding:13px 40px;min-width:72%}
   #playBtn:active{background:#ffd94d}
-  #hint{font-size:13px;color:#888;margin-top:8px;text-align:center}
-  #status{margin-top:6px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;
-          font-family:monospace;font-size:13px;line-height:1.35;padding:6px 8px;border-radius:8px;
-          min-height:52px;white-space:pre-wrap;word-break:break-word}
+  #linkRow{margin-top:10px;width:100%;display:flex;flex-direction:column;align-items:center}
+  #urlBox{width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:10px;border:1px solid #555;background:#111;color:#fff}
+  #loadBtn{margin-top:7px;background:#2b6cb0;color:#fff;border:none;border-radius:12px;
+           font-size:20px;font-weight:bold;padding:11px 30px;min-width:72%}
+  #loadBtn:active{background:#3a86d4}
+  #hint{font-size:12px;color:#888;margin-top:7px;text-align:center}
+  #status{margin-top:5px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;
+          font-family:monospace;font-size:12px;line-height:1.3;padding:5px 8px;border-radius:8px;
+          min-height:42px;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top">VIDEO TEST <span>build VT-1</span></div>
+  <div id="top">MOVIE PLAYER <span>build VT-2</span></div>
   <video id="v" controls playsinline preload="metadata"></video>
   <div id="clipName"></div>
   <div id="counter"></div>
   <button id="playBtn">&#9654; PLAY</button>
-  <div id="hint">Swipe &#9664; &#9654; to switch clips &middot; pinch PLAY to start / pause</div>
+  <div id="linkRow">
+    <input id="urlBox" type="text" placeholder="Paste a direct video link here (.mp4)">
+    <button id="loadBtn">LOAD &amp; PLAY LINK</button>
+  </div>
+  <div id="hint">Swipe &#9664; &#9654; switches built-in movies &middot; video fills the lens while playing &middot; pause to get controls back</div>
   <div id="status">status: ready</div>
 </div>
 <script>
 var CLIPS = [
-  { name: "Quick Test Clip (5 sec)", src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" },
   { name: "The Terror (1963) — full movie", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
-  { name: "House on Haunted Hill (1959) — full movie", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" }
+  { name: "House on Haunted Hill (1959) — full movie", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
+  { name: "Quick Test Clip (5 sec)", src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" }
 ];
 var v = document.getElementById('v');
 var btn = document.getElementById('playBtn');
 var st = document.getElementById('status');
-var idx = 0, lastLog = 'ready';
+var idx = 0, lastLog = 'ready', custom = false;
 
 function fmt(t){ if(!isFinite(t)) return '0:00'; t=Math.floor(t); var m=Math.floor(t/60), s=t%60; return m+':'+(s<10?'0':'')+s; }
 function log(msg){
   lastLog = msg;
   st.textContent = 'status: ' + msg + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration) + '  readyState: ' + v.readyState;
 }
+function goFull(){
+  try { if (v.requestFullscreen) { var r = v.requestFullscreen(); if (r && r.catch) r.catch(function(){}); } } catch(e){}
+  try { if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); } catch(e){}
+  document.body.classList.add('watch');
+}
+function exitFull(){ document.body.classList.remove('watch'); }
 function load(i){
+  custom = false;
   idx = (i + CLIPS.length) % CLIPS.length;
   document.getElementById('clipName').textContent = CLIPS[idx].name;
-  document.getElementById('counter').textContent = 'Clip ' + (idx+1) + ' of ' + CLIPS.length;
+  document.getElementById('counter').textContent = 'Movie ' + (idx+1) + ' of ' + CLIPS.length;
   btn.innerHTML = '&#9654; PLAY';
+  exitFull();
   v.src = CLIPS[idx].src;
   v.load();
-  log('loaded clip ' + (idx+1) + ', fetching video...');
+  log('loaded movie ' + (idx+1) + ', fetching...');
+}
+function playIt(){
+  var p = v.play();
+  if (p && p.catch) p.catch(function(e){ log('PLAY BLOCKED: ' + e.name + ' — ' + e.message); });
+  goFull();
+  log('play pressed...');
 }
 function toggle(){
-  if (v.paused || v.ended){
-    var p = v.play();
-    if (p && p.catch) p.catch(function(e){ log('PLAY BLOCKED: ' + e.name + ' — ' + e.message); });
-    log('play pressed...');
-  } else {
-    v.pause();
-  }
+  if (v.paused || v.ended) playIt(); else v.pause();
 }
 btn.addEventListener('click', toggle);
 v.addEventListener('click', toggle);
+document.getElementById('loadBtn').addEventListener('click', function(){
+  var url = document.getElementById('urlBox').value.replace(/\s+/g,'').trim();
+  if (!url){ log('paste a link in the box first'); return; }
+  custom = true;
+  document.getElementById('clipName').textContent = 'Your link';
+  document.getElementById('counter').textContent = 'custom link';
+  btn.innerHTML = '&#9654; PLAY';
+  v.src = url;
+  v.load();
+  if (!/\.(mp4|webm|m3u8|mov)(\?|#|$)/i.test(url)) log('loading link — note: watch-page links will not play, only direct video files');
+  else log('loading your link...');
+  playIt();
+});
 v.addEventListener('canplay', function(){ log('can play — pinch PLAY'); });
-v.addEventListener('playing', function(){ btn.innerHTML = '&#10073;&#10073; PAUSE'; log('PLAYING'); });
-v.addEventListener('pause', function(){ btn.innerHTML = '&#9654; PLAY'; log('paused'); });
+v.addEventListener('playing', function(){ btn.innerHTML = '&#10073;&#10073; PAUSE'; goFull(); log('PLAYING — full lens'); });
+v.addEventListener('pause', function(){ btn.innerHTML = '&#9654; PLAY'; exitFull(); log('paused'); });
 v.addEventListener('waiting', function(){ log('buffering...'); });
-v.addEventListener('stalled', function(){ log('stalled — network slow'); });
-v.addEventListener('ended', function(){ btn.innerHTML = '&#9654; PLAY AGAIN'; log('ended'); });
+v.addEventListener('stalled', function(){ log('stalled — host is slow, give it a few seconds'); });
+v.addEventListener('ended', function(){ btn.innerHTML = '&#9654; PLAY AGAIN'; exitFull(); log('ended'); });
 v.addEventListener('error', function(){
   var e = v.error;
-  log('ERROR ' + (e ? ('code ' + e.code + ' ' + (e.message||'')) : 'unknown'));
+  log('ERROR ' + (e ? ('code ' + e.code + ' ' + (e.message||'')) : 'unknown') + ' — link may not be a direct video file');
 }, true);
 v.addEventListener('timeupdate', function(){
   st.textContent = 'status: ' + lastLog + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration) + '  readyState: ' + v.readyState;
@@ -83,6 +115,7 @@ v.addEventListener('timeupdate', function(){
 var tx = 0, ty = 0;
 document.addEventListener('touchstart', function(e){ tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, {passive:true});
 document.addEventListener('touchend', function(e){
+  if (document.body.classList.contains('watch')) return;
   var dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
   if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) load(idx + (dx < 0 ? 1 : -1));
 }, {passive:true});

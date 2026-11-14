@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Movie Player — VT-3</title>
+<title>Movie Player — VT-4</title>
 <style>
   html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;height:100%;overflow:hidden}
   #app{display:flex;flex-direction:column;align-items:center;height:100vh;padding:8px 10px;box-sizing:border-box}
@@ -32,7 +32,7 @@
 </head>
 <body>
 <div id="app">
-  <div id="top">MOVIE PLAYER <span>build VT-3</span></div>
+  <div id="top">MOVIE PLAYER <span>build VT-4</span></div>
   <video id="v" controls playsinline preload="metadata"></video>
   <input id="qBox" type="text" placeholder="Type a movie title — or paste a .mp4 link">
   <button id="searchBtn">SEARCH</button>
@@ -49,7 +49,7 @@
     <button class="navBtn" id="nextBtn">&#9654;</button>
   </div>
   <button id="playBtn">&#9654; PLAY MOVIE</button>
-  <div id="hint">Swipe or use &#9664; &#9654; to browse &middot; video fills the lens while playing &middot; pause to come back</div>
+  <div id="hint">Tap the box, dictate the title, finish, THEN tap SEARCH &middot; swipe or &#9664; &#9654; to browse &middot; pause during a movie to come back</div>
   <div id="status">status: ready</div>
 </div>
 <script>
@@ -99,6 +99,32 @@ function playCurrent(){
 }
 function togglePlay(){ if (v.paused || v.ended) playCurrent(); else v.pause(); }
 
+function enc(s){ return encodeURIComponent(s); }
+function getJSON(url, cbName){
+  // Try fetch first; fall back to JSONP (script tag) which archive.org supports via &callback=
+  function viaFetch(){
+    return fetch(url).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+  function viaJSONP(){
+    return new Promise(function(resolve, reject){
+      var cb = 'cb_' + Math.random().toString(36).slice(2, 9);
+      var timer = setTimeout(function(){ cleanup(); reject(new Error('jsonp timeout')); }, 12000);
+      function cleanup(){ try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); clearTimeout(timer); }
+      window[cb] = function(data){ cleanup(); resolve(data); };
+      var sc = document.createElement('script');
+      sc.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cb;
+      sc.onerror = function(){ cleanup(); reject(new Error('jsonp load error')); };
+      document.head.appendChild(sc);
+    });
+  }
+  return viaFetch().catch(function(){ return viaJSONP(); });
+}
+function withTimeout(promise, ms){
+  return Promise.race([promise, new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms); })]);
+}
 function pickMp4(files, ident){
   var mp4s = [];
   for (var i = 0; i < files.length; i++){
@@ -108,9 +134,8 @@ function pickMp4(files, ident){
     mp4s.push({ name: n, size: parseInt(files[i].size || '0', 10) });
   }
   if (!mp4s.length) return null;
-  var kb = null;
-  for (var j = 0; j < mp4s.length; j++) if (/512kb/i.test(mp4s[j].name)) { kb = mp4s[j]; break; }
-  var pick = kb;
+  var pick = null;
+  for (var j = 0; j < mp4s.length; j++) if (/512kb/i.test(mp4s[j].name)) { pick = mp4s[j]; break; }
   if (!pick){
     mp4s.sort(function(a,b){ return a.size - b.size; });
     var big = mp4s.filter(function(f){ return f.size > 80000000; });
@@ -121,22 +146,21 @@ function pickMp4(files, ident){
 
 function doSearch(){
   var q = document.getElementById('qBox').value.replace(/\s+/g, ' ').trim();
-  if (!q){ log('type a movie title in the box first'); return; }
+  if (!q){ log('the box looks empty — tap the box, dictate the title, finish, then tap SEARCH'); return; }
   if (/:\/\//.test(q)){
     results = [{ title: 'Your link', year: '', id: '', src: q.replace(/\s/g, '') }];
     idx = 0; showCard(); playCurrent(); return;
   }
-  log('searching archive.org for "' + q + '"...');
+  log('step 1 of 2: searching archive.org for "' + q + '"...');
   var query = 'title:(' + q + ') AND mediatype:movies AND collection:(feature_films OR film_noir OR SciFi_Horror OR comedy_films OR animationandcartoons)';
-  var url = 'https://archive.org/advancedsearch.php?q=' + encodeURIComponent(query) +
-            '&fl[]=identifier&fl[]=title&fl[]=year&rows=12&sort[]=downloads desc&output=json';
-  fetch(url).then(function(r){ return r.json(); }).then(function(d){
+  var url = 'https://archive.org/advancedsearch.php?q=' + enc(query) +
+            '&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&rows=10&sort%5B%5D=' + enc('downloads desc') + '&output=json';
+  withTimeout(getJSON(url), 15000).then(function(d){
     var docs = (d.response && d.response.docs) || [];
-    if (!docs.length){ results = []; showCard(); log('no matches — try different words'); return; }
-    log('found ' + docs.length + ' — checking which have playable files...');
+    if (!docs.length){ results = []; showCard(); log('no matches for "' + q + '" — try fewer or different words'); return; }
+    log('step 2 of 2: ' + docs.length + ' titles found — checking which have playable files...');
     var jobs = docs.map(function(doc){
-      return fetch('https://archive.org/metadata/' + encodeURIComponent(doc.identifier))
-        .then(function(r){ return r.json(); })
+      return withTimeout(getJSON('https://archive.org/metadata/' + enc(doc.identifier)), 10000)
         .then(function(m){
           if (m.is_dark) return null;
           var src = pickMp4(m.files || [], doc.identifier);
@@ -147,10 +171,10 @@ function doSearch(){
     Promise.all(jobs).then(function(list){
       results = list.filter(function(x){ return x; });
       idx = 0; showCard();
-      if (results.length) log('ready — ' + results.length + ' playable movies. Pinch PLAY MOVIE.');
-      else log('matches found but no playable video files');
+      if (results.length) log('done — ' + results.length + ' playable movies. Pinch PLAY MOVIE.');
+      else log('titles found but none had a playable video file');
     });
-  }).catch(function(e){ log('search failed — ' + e.message); });
+  }).catch(function(e){ log('search failed at step 1 — ' + e.message + ' (tell me this line)'); });
 }
 
 document.getElementById('searchBtn').addEventListener('click', doSearch);

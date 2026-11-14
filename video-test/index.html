@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Movie Player — VT-4</title>
+<title>Movie Shelf — VT-5</title>
 <style>
   html,body{margin:0;padding:0;background:#000;color:#fff;font-family:Arial,Helvetica,sans-serif;height:100%;overflow:hidden}
   #app{display:flex;flex-direction:column;align-items:center;height:100vh;padding:8px 10px;box-sizing:border-box}
@@ -12,35 +12,33 @@
   video{display:none}
   body.watch video{display:block;position:fixed;inset:0;width:100vw;height:100vh;border:none;z-index:50;object-fit:contain;background:#000}
   body.watch #app > *:not(video){visibility:hidden}
-  #qBox{margin-top:8px;width:100%;box-sizing:border-box;font-size:16px;padding:10px;border-radius:10px;border:1px solid #555;background:#111;color:#fff}
-  #searchBtn{margin-top:7px;background:#2b6cb0;color:#fff;border:none;border-radius:12px;font-size:20px;font-weight:bold;padding:11px 30px;min-width:72%}
-  #searchBtn:active{background:#3a86d4}
-  #card{margin-top:10px;width:100%;box-sizing:border-box;background:#141414;border:1px solid #333;border-radius:12px;padding:10px;display:flex;gap:10px;align-items:center}
-  #poster{width:62px;height:88px;object-fit:cover;border-radius:6px;background:#222;flex:none}
+  #card{margin-top:8px;width:100%;box-sizing:border-box;background:#141414;border:1px solid #333;border-radius:14px;padding:12px;display:flex;gap:12px;align-items:center}
+  #poster{width:118px;height:172px;object-fit:cover;border-radius:8px;background:#222;flex:none}
   #meta{flex:1;min-width:0}
-  #rTitle{font-size:21px;font-weight:bold;line-height:1.2;word-wrap:break-word}
-  #rSub{font-size:14px;color:#aaa;margin-top:3px}
-  #navRow{margin-top:8px;display:flex;align-items:center;gap:14px}
-  .navBtn{background:#222;color:#f5c518;border:1px solid #444;border-radius:10px;font-size:24px;padding:8px 22px}
+  #rTitle{font-size:24px;font-weight:bold;line-height:1.2;word-wrap:break-word}
+  #rSub{font-size:15px;color:#f5c518;margin-top:5px}
+  #rNote{font-size:13px;color:#999;margin-top:5px;line-height:1.3}
+  #navRow{margin-top:10px;display:flex;align-items:center;gap:16px}
+  .navBtn{background:#222;color:#f5c518;border:1px solid #444;border-radius:10px;font-size:26px;padding:9px 26px}
   .navBtn:active{background:#333}
-  #counter{font-size:15px;color:#ccc}
-  #playBtn{margin-top:9px;background:#f5c518;color:#000;border:none;border-radius:12px;font-size:25px;font-weight:bold;padding:13px 40px;min-width:72%}
+  #counter{font-size:16px;color:#ccc}
+  #playBtn{margin-top:10px;background:#f5c518;color:#000;border:none;border-radius:12px;font-size:26px;font-weight:bold;padding:14px 42px;min-width:74%}
   #playBtn:active{background:#ffd94d}
-  #hint{font-size:12px;color:#888;margin-top:7px;text-align:center}
-  #status{margin-top:5px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;font-family:monospace;font-size:12px;line-height:1.3;padding:5px 8px;border-radius:8px;min-height:42px;white-space:pre-wrap;word-break:break-word}
+  #restartBtn{margin-top:8px;background:none;color:#888;border:1px solid #333;border-radius:10px;font-size:14px;padding:7px 18px}
+  #hint{font-size:12px;color:#888;margin-top:8px;text-align:center}
+  #status{margin-top:5px;width:100%;box-sizing:border-box;background:#0a1a0a;color:#7dff7d;font-family:monospace;font-size:12px;line-height:1.3;padding:5px 8px;border-radius:8px;min-height:34px;white-space:pre-wrap;word-break:break-word}
 </style>
 </head>
 <body>
 <div id="app">
-  <div id="top">MOVIE PLAYER <span>build VT-4</span></div>
+  <div id="top">MOVIE SHELF <span>build VT-5</span></div>
   <video id="v" controls playsinline preload="metadata"></video>
-  <input id="qBox" type="text" placeholder="Type a movie title — or paste a .mp4 link">
-  <button id="searchBtn">SEARCH</button>
   <div id="card">
     <img id="poster" alt="">
     <div id="meta">
       <div id="rTitle"></div>
       <div id="rSub"></div>
+      <div id="rNote"></div>
     </div>
   </div>
   <div id="navRow">
@@ -49,153 +47,108 @@
     <button class="navBtn" id="nextBtn">&#9654;</button>
   </div>
   <button id="playBtn">&#9654; PLAY MOVIE</button>
-  <div id="hint">Tap the box, dictate the title, finish, THEN tap SEARCH &middot; swipe or &#9664; &#9654; to browse &middot; pause during a movie to come back</div>
+  <button id="restartBtn">&#8634; RESTART FROM BEGINNING</button>
+  <div id="hint">Swipe or use &#9664; &#9654; to browse the shelf &middot; the movie fills the lens while it plays &middot; pause to come back — it remembers where you stopped</div>
   <div id="status">status: ready</div>
 </div>
 <script>
-var STARTERS = [
-  { title: "The Terror (1963)", year: "1963", id: "TheTerror1963", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
-  { title: "House on Haunted Hill (1959)", year: "1959", id: "house_on_haunted_hill", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
-  { title: "Carnival of Souls (1962)", year: "1962", id: "carnival_of_souls", src: "https://archive.org/download/carnival_of_souls/carnival_of_souls_512kb.mp4" }
+var SHELF = [
+  { title: "The Terror", year: "1963", genre: "Horror", note: "Boris Karloff + a young Jack Nicholson. The one you already started.", id: "TheTerror1963", src: "https://archive.org/download/TheTerror1963/TheTerror_512kb.mp4" },
+  { title: "House on Haunted Hill", year: "1959", genre: "Horror", note: "Vincent Price offers five strangers $10,000 to survive one night in his haunted house.", id: "house_on_haunted_hill", src: "https://archive.org/download/house_on_haunted_hill/house_on_haunted_hill.mp4" },
+  { title: "Carnival of Souls", year: "1962", genre: "Horror", note: "A woman survives a car crash, then keeps seeing a pale stranger everywhere. Cult classic.", id: "carnival_of_souls", src: "https://archive.org/download/carnival_of_souls/carnival_of_souls_512kb.mp4" },
+  { title: "The Little Shop of Horrors", year: "1960", genre: "Horror Comedy", note: "A shy florist raises a plant that eats people. Jack Nicholson shows up too.", id: "TheLittleShopOfHorrors", src: "https://archive.org/download/TheLittleShopOfHorrors/The%20Little%20Shop%20of%20Horrors.mp4" },
+  { title: "White Zombie", year: "1932", genre: "Horror", note: "Bela Lugosi turns plantation workers into zombies. The first zombie movie ever made.", id: "WhiteZombie1932", src: "https://archive.org/download/WhiteZombie1932/WhiteZombie_512kb.mp4" },
+  { title: "The Vampire Bat", year: "1933", genre: "Horror", note: "A village panics as victims turn up drained of blood, night after night.", id: "TheVampireBat1933", src: "https://archive.org/download/TheVampireBat1933/the-vampire-bat-1933_512kb.mp4" },
+  { title: "Nosferatu", year: "1922", genre: "Horror Classic", note: "The original vampire film — silent, eerie, and still creepy a century later.", id: "Nosferatu1922", src: "https://archive.org/download/Nosferatu1922/Nosferatu-smaller2.mp4" },
+  { title: "Attack of the Giant Leeches", year: "1959", genre: "Sci-Fi Horror", note: "Giant leeches drag swamp locals into underwater caves. Pure drive-in cheese.", id: "AttackOfTheGiantLeeches", src: "https://archive.org/download/AttackOfTheGiantLeeches/AttackOfTheGiantLeeches_512kb.mp4" },
+  { title: "Teenagers From Outer Space", year: "1959", genre: "Sci-Fi", note: "An alien teen lands on Earth and turns on his own crew to protect us.", id: "TeenagersFromOuterSpace", src: "https://archive.org/download/TeenagersFromOuterSpace/TeenagersFromOuterSpace_512kb.mp4" },
+  { title: "Suddenly", year: "1954", genre: "Thriller", note: "Frank Sinatra plays a hired killer holding a family hostage to shoot the President.", id: "Suddenly1954", src: "https://archive.org/download/Suddenly1954/Suddenly_1954.mp4" },
+  { title: "The General", year: "1926", genre: "Comedy Classic", note: "Buster Keaton chases a stolen train. Often called the greatest silent comedy ever.", id: "TheGeneral1926", src: "https://archive.org/download/TheGeneral1926/The_General_1926_720p_512kb.mp4" },
+  { title: "The Lost World", year: "1925", genre: "Adventure", note: "Explorers find living dinosaurs on a plateau. The effects grandfather of King Kong.", id: "TheLostWorld1925", src: "https://archive.org/download/TheLostWorld1925/TheLostWorld1925_256.mp4" }
 ];
-var results = STARTERS.slice();
-var idx = 0;
 var v = document.getElementById('v');
 var st = document.getElementById('status');
 var lastLog = 'ready';
 
-function fmt(t){ if(!isFinite(t)) return '0:00'; t=Math.floor(t); var m=Math.floor(t/60), s=t%60; return m+':'+(s<10?'0':'')+s; }
+function store(k, val){ try { if (val === undefined) return localStorage.getItem(k); localStorage.setItem(k, val); } catch(e){ return null; } }
+function fmt(t){ if(!isFinite(t) || t < 0) return '0:00'; t = Math.floor(t); var h = Math.floor(t/3600), m = Math.floor((t%3600)/60), s = t%60; return (h > 0 ? h + ':' : '') + (h > 0 && m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s; }
 function log(msg){
   lastLog = msg;
-  st.textContent = 'status: ' + msg + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration);
+  st.textContent = 'status: ' + msg;
 }
+function savedTime(src){
+  try { var t = JSON.parse(store('vt5_times') || '{}'); return t[src] || 0; } catch(e){ return 0; }
+}
+function saveTime(){
+  if (!v.src || !v.currentTime) return;
+  try {
+    var t = JSON.parse(store('vt5_times') || '{}');
+    if (v.duration && v.currentTime > v.duration - 30) delete t[v.src]; else t[v.src] = Math.floor(v.currentTime);
+    store('vt5_times', JSON.stringify(t));
+  } catch(e){}
+}
+var idx = 0;
+try { idx = parseInt(store('vt5_idx') || '0', 10) || 0; if (idx < 0 || idx >= SHELF.length) idx = 0; } catch(e){ idx = 0; }
+
 function showCard(){
-  var r = results[idx];
-  if (!r){ document.getElementById('rTitle').textContent = 'No movies found'; document.getElementById('rSub').textContent = ''; document.getElementById('counter').textContent = '0 of 0'; document.getElementById('poster').style.visibility = 'hidden'; return; }
+  var r = SHELF[idx];
   var t = document.getElementById('rTitle');
   t.textContent = r.title;
-  t.style.fontSize = r.title.length > 55 ? '15px' : (r.title.length > 32 ? '18px' : '21px');
-  document.getElementById('rSub').textContent = (r.year ? r.year + ' · ' : '') + 'archive.org';
-  document.getElementById('counter').textContent = (idx+1) + ' of ' + results.length;
-  var img = document.getElementById('poster');
-  if (r.id){ img.style.visibility = 'visible'; img.src = 'https://archive.org/services/img/' + r.id; }
-  else img.style.visibility = 'hidden';
+  t.style.fontSize = r.title.length > 30 ? '20px' : '24px';
+  document.getElementById('rSub').textContent = r.year + ' · ' + r.genre;
+  var left = savedTime(r.src);
+  document.getElementById('rNote').textContent = r.note + (left > 30 ? '  ▶ Resumes at ' + fmt(left) : '');
+  document.getElementById('counter').textContent = (idx+1) + ' of ' + SHELF.length;
+  document.getElementById('poster').src = 'https://archive.org/services/img/' + r.id;
+  store('vt5_idx', String(idx));
 }
-function move(d){ if (!results.length) return; idx = (idx + d + results.length) % results.length; showCard(); log('browsing: ' + results[idx].title); }
+function move(d){ idx = (idx + d + SHELF.length) % SHELF.length; showCard(); log('browsing: ' + SHELF[idx].title); }
 function goFull(){
   try { if (v.requestFullscreen) { var r = v.requestFullscreen(); if (r && r.catch) r.catch(function(){}); } } catch(e){}
   try { if (v.webkitEnterFullscreen) v.webkitEnterFullscreen(); } catch(e){}
   document.body.classList.add('watch');
 }
 function exitFull(){ document.body.classList.remove('watch'); }
-function playCurrent(){
-  var r = results[idx];
-  if (!r){ log('nothing to play — search first'); return; }
-  if (v.getAttribute('data-loaded') !== r.src){ v.src = r.src; v.setAttribute('data-loaded', r.src); v.load(); }
+var pendingResume = 0;
+function playCurrent(fromStart){
+  var r = SHELF[idx];
+  pendingResume = fromStart ? 0 : savedTime(r.src);
+  if (v.getAttribute('data-loaded') !== r.src){
+    v.src = r.src; v.setAttribute('data-loaded', r.src); v.load();
+  } else if (fromStart){ v.currentTime = 0; }
   var p = v.play();
   if (p && p.catch) p.catch(function(e){ log('PLAY BLOCKED: ' + e.name + ' — ' + e.message); });
   goFull();
-  log('loading ' + r.title + '...');
+  log('loading ' + r.title + ' — archive.org starts slow, give it a few seconds');
 }
-function togglePlay(){ if (v.paused || v.ended) playCurrent(); else v.pause(); }
-
-function enc(s){ return encodeURIComponent(s); }
-function getJSON(url, cbName){
-  // Try fetch first; fall back to JSONP (script tag) which archive.org supports via &callback=
-  function viaFetch(){
-    return fetch(url).then(function(r){
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    });
+v.addEventListener('loadedmetadata', function(){
+  if (pendingResume > 30 && v.duration && pendingResume < v.duration - 60){
+    try { v.currentTime = pendingResume; } catch(e){}
+    log('resumed at ' + fmt(pendingResume));
   }
-  function viaJSONP(){
-    return new Promise(function(resolve, reject){
-      var cb = 'cb_' + Math.random().toString(36).slice(2, 9);
-      var timer = setTimeout(function(){ cleanup(); reject(new Error('jsonp timeout')); }, 12000);
-      function cleanup(){ try { delete window[cb]; } catch(e){ window[cb] = undefined; } if (sc.parentNode) sc.parentNode.removeChild(sc); clearTimeout(timer); }
-      window[cb] = function(data){ cleanup(); resolve(data); };
-      var sc = document.createElement('script');
-      sc.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + cb;
-      sc.onerror = function(){ cleanup(); reject(new Error('jsonp load error')); };
-      document.head.appendChild(sc);
-    });
-  }
-  return viaFetch().catch(function(){ return viaJSONP(); });
-}
-function withTimeout(promise, ms){
-  return Promise.race([promise, new Promise(function(_, reject){ setTimeout(function(){ reject(new Error('timeout')); }, ms); })]);
-}
-function pickMp4(files, ident){
-  var mp4s = [];
-  for (var i = 0; i < files.length; i++){
-    var n = files[i].name || '';
-    if (!/\.mp4$/i.test(n)) continue;
-    if (/trailer|sample|preview/i.test(n)) continue;
-    mp4s.push({ name: n, size: parseInt(files[i].size || '0', 10) });
-  }
-  if (!mp4s.length) return null;
-  var pick = null;
-  for (var j = 0; j < mp4s.length; j++) if (/512kb/i.test(mp4s[j].name)) { pick = mp4s[j]; break; }
-  if (!pick){
-    mp4s.sort(function(a,b){ return a.size - b.size; });
-    var big = mp4s.filter(function(f){ return f.size > 80000000; });
-    pick = big.length ? big[0] : mp4s[mp4s.length - 1];
-  }
-  return 'https://archive.org/download/' + ident + '/' + encodeURIComponent(pick.name);
-}
-
-function doSearch(){
-  var q = document.getElementById('qBox').value.replace(/\s+/g, ' ').trim();
-  if (!q){ log('the box looks empty — tap the box, dictate the title, finish, then tap SEARCH'); return; }
-  if (/:\/\//.test(q)){
-    results = [{ title: 'Your link', year: '', id: '', src: q.replace(/\s/g, '') }];
-    idx = 0; showCard(); playCurrent(); return;
-  }
-  log('step 1 of 2: searching archive.org for "' + q + '"...');
-  var query = 'title:(' + q + ') AND mediatype:movies AND collection:(feature_films OR film_noir OR SciFi_Horror OR comedy_films OR animationandcartoons)';
-  var url = 'https://archive.org/advancedsearch.php?q=' + enc(query) +
-            '&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=year&rows=10&sort%5B%5D=' + enc('downloads desc') + '&output=json';
-  withTimeout(getJSON(url), 15000).then(function(d){
-    var docs = (d.response && d.response.docs) || [];
-    if (!docs.length){ results = []; showCard(); log('no matches for "' + q + '" — try fewer or different words'); return; }
-    log('step 2 of 2: ' + docs.length + ' titles found — checking which have playable files...');
-    var jobs = docs.map(function(doc){
-      return withTimeout(getJSON('https://archive.org/metadata/' + enc(doc.identifier)), 10000)
-        .then(function(m){
-          if (m.is_dark) return null;
-          var src = pickMp4(m.files || [], doc.identifier);
-          if (!src) return null;
-          return { title: doc.title || doc.identifier, year: doc.year || '', id: doc.identifier, src: src };
-        }).catch(function(){ return null; });
-    });
-    Promise.all(jobs).then(function(list){
-      results = list.filter(function(x){ return x; });
-      idx = 0; showCard();
-      if (results.length) log('done — ' + results.length + ' playable movies. Pinch PLAY MOVIE.');
-      else log('titles found but none had a playable video file');
-    });
-  }).catch(function(e){ log('search failed at step 1 — ' + e.message + ' (tell me this line)'); });
-}
-
-document.getElementById('searchBtn').addEventListener('click', doSearch);
-document.getElementById('playBtn').addEventListener('click', playCurrent);
-document.getElementById('prevBtn').addEventListener('click', function(){ move(-1); });
-document.getElementById('nextBtn').addEventListener('click', function(){ move(1); });
-document.getElementById('card').addEventListener('click', playCurrent);
-v.addEventListener('click', togglePlay);
+  pendingResume = 0;
+});
 v.addEventListener('playing', function(){ goFull(); log('PLAYING — full lens'); });
-v.addEventListener('pause', function(){ exitFull(); log('paused'); });
+v.addEventListener('pause', function(){ exitFull(); saveTime(); log('paused — your spot is saved'); });
 v.addEventListener('waiting', function(){ log('buffering...'); });
 v.addEventListener('stalled', function(){ log('stalled — archive.org is slow, give it a few seconds'); });
-v.addEventListener('ended', function(){ exitFull(); log('ended'); });
+v.addEventListener('ended', function(){ exitFull(); saveTime(); log('the end'); });
 v.addEventListener('error', function(){
   var e = v.error;
-  log('ERROR ' + (e ? ('code ' + e.code) : 'unknown') + ' — that file would not play');
+  log('ERROR ' + (e ? ('code ' + e.code) : 'unknown') + ' — tell me which movie and this line');
 }, true);
-v.addEventListener('timeupdate', function(){
-  if (document.body.classList.contains('watch')) return;
-  st.textContent = 'status: ' + lastLog + '\n' + 'time: ' + fmt(v.currentTime) + ' / ' + fmt(v.duration);
+v.addEventListener('click', function(){ if (v.paused) playCurrent(false); else v.pause(); });
+setInterval(saveTime, 15000);
+
+document.getElementById('playBtn').addEventListener('click', function(){ playCurrent(false); });
+document.getElementById('restartBtn').addEventListener('click', function(){
+  var r = SHELF[idx];
+  try { var t = JSON.parse(store('vt5_times') || '{}'); delete t[r.src]; store('vt5_times', JSON.stringify(t)); } catch(e){}
+  showCard(); log(r.title + ' set to start from the beginning');
 });
+document.getElementById('prevBtn').addEventListener('click', function(){ move(-1); });
+document.getElementById('nextBtn').addEventListener('click', function(){ move(1); });
+document.getElementById('card').addEventListener('click', function(){ playCurrent(false); });
 var tx = 0, ty = 0;
 document.addEventListener('touchstart', function(e){ tx = e.changedTouches[0].clientX; ty = e.changedTouches[0].clientY; }, {passive:true});
 document.addEventListener('touchend', function(e){
@@ -206,10 +159,10 @@ document.addEventListener('touchend', function(e){
 document.addEventListener('keydown', function(e){
   if (e.key === 'ArrowRight') move(1);
   else if (e.key === 'ArrowLeft') move(-1);
-  else if (e.key === 'Enter') togglePlay();
+  else if (e.key === 'Enter') { if (v.paused) playCurrent(false); else v.pause(); }
 });
 showCard();
-log('ready — search a title, or start with a starter pick');
+log('ready — swipe to a movie, pinch PLAY MOVIE');
 </script>
 </body>
 </html>
